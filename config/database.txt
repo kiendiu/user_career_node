@@ -1,13 +1,8 @@
-CREATE TABLE fields (
-    field_id INT PRIMARY KEY AUTO_INCREMENT,
-    name_field VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE majors (
-    major_id INT PRIMARY KEY AUTO_INCREMENT,
-    field_id INT,
-    name_major VARCHAR(255) NOT NULL,
-    FOREIGN KEY (field_id) REFERENCES fields(field_id)
+CREATE TABLE categories (
+    category_id INT PRIMARY KEY AUTO_INCREMENT,
+    name_category VARCHAR(255) NOT NULL,
+    parent_id INT DEFAULT NULL,
+    FOREIGN KEY (parent_id) REFERENCES categories(category_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE users (
@@ -19,9 +14,9 @@ CREATE TABLE users (
     phone VARCHAR(11) UNIQUE,
     social_media_url VARCHAR(255),
     address VARCHAR(255),
-    create_at DATETIME,
-    updated_at DATETIME,
-    balance_wallet INT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    balance_wallet INT DEFAULT 0,
     username NVARCHAR(255) UNIQUE,
     email VARCHAR(255) UNIQUE,
     password VARCHAR(255),
@@ -44,20 +39,17 @@ CREATE TABLE user_languages (
     FOREIGN KEY (language_id) REFERENCES languages(language_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-
 CREATE TABLE experiences (
     experience_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
     company NVARCHAR(255),
-    field_id INT,
-    major_id INT,
+    category_id INT,
     start_time DATETIME,
     end_time DATETIME,
-    currently_working BIT,
+    currently_working TINYINT(1),
     job_description TEXT,
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (field_id) REFERENCES fields(field_id),
-    FOREIGN KEY (major_id) REFERENCES majors(major_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE certificates (
@@ -67,20 +59,18 @@ CREATE TABLE certificates (
     certificate_description TEXT,
     link_url VARCHAR(255),
     thumbnails VARCHAR(255),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE skills (
     skill_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
-    major_id INT,
-    field_id INT,
+    category_id INT,
     name_skill VARCHAR(255),
     experience_year INT,
     skill_description TEXT,
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (major_id) REFERENCES majors(major_id),
-    FOREIGN KEY (field_id) REFERENCES fields(field_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE service_user (
@@ -88,11 +78,11 @@ CREATE TABLE service_user (
     skill_id INT,
     user_id INT,
     time_online INT,
-    price_online INT,
+    price_online DOUBLE,
     time_offline INT,
     price_offline DOUBLE,
-    FOREIGN KEY (skill_id) REFERENCES skills(skill_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (skill_id) REFERENCES skills(skill_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE service_frame (
@@ -101,7 +91,7 @@ CREATE TABLE service_frame (
     week_day ENUM('T2', 'T3', 'T4','T5','T6','T7','CN'),
     start_time TIME,
     end_time TIME,
-    FOREIGN KEY (service_id) REFERENCES service_user(service_id)
+    FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE user_requests (
@@ -113,10 +103,10 @@ CREATE TABLE user_requests (
     bidding_end_date DATETIME NOT NULL,
     location_name VARCHAR(255),
     address VARCHAR(255),
-    create_at DATETIME,
-    update_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     status ENUM('open', 'closed') DEFAULT 'open',
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE bids (
@@ -125,10 +115,10 @@ CREATE TABLE bids (
     request_id INT,
     price DOUBLE NOT NULL,
     description TEXT,
-    create_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     status ENUM('pending', 'accepted', 'rejected', 'withdrawn') DEFAULT 'pending',
-    FOREIGN KEY (expert_id) REFERENCES users(user_id),
-    FOREIGN KEY (request_id) REFERENCES user_requests(request_id)
+    FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE request_progress (
@@ -138,8 +128,8 @@ CREATE TABLE request_progress (
     status ENUM('confirmed', 'in_progress', 'completed') DEFAULT 'confirmed',
     start_time DATETIME,
     end_time DATETIME,
-    FOREIGN KEY (request_id) REFERENCES user_requests(request_id),
-    FOREIGN KEY (bid_id) REFERENCES bids(bid_id)
+    FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (bid_id) REFERENCES bids(bid_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE request_review (
@@ -149,9 +139,9 @@ CREATE TABLE request_review (
     rating TINYINT CHECK(rating >= 1 AND rating <= 5),
     review_description TEXT,
     feedback TEXT,
-    create_at DATETIME,
-    FOREIGN KEY (request_id) REFERENCES user_requests(request_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE transactions (
@@ -160,9 +150,9 @@ CREATE TABLE transactions (
     type ENUM('service', 'deposit'),
     amount DOUBLE,
     status ENUM('pending', 'completed', 'failed'),
-    create_at DATETIME,
-    update_at DATETIME,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE request_payments (
@@ -171,7 +161,7 @@ CREATE TABLE request_payments (
     transaction_id INT NOT NULL,
     amount DOUBLE NOT NULL,
     payment_method ENUM('COD', 'Bank', 'Paypal') NOT NULL,
-    create_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -185,7 +175,7 @@ CREATE TABLE book_services (
     duration INT NOT NULL, -- thời lượng dịch vụ (phút)
     total_price DOUBLE NOT NULL,
     note_message TEXT,
-    create_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     status ENUM('pending', 'confirmed', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
     FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -199,7 +189,7 @@ CREATE TABLE service_reviews (
     expert_id INT NOT NULL,
     rating TINYINT CHECK(rating >= 1 AND rating <= 5),
     review_description TEXT,
-    create_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (book_id) REFERENCES book_services(book_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -208,20 +198,20 @@ CREATE TABLE service_reviews (
 CREATE TABLE wallet_deposit (
     deposit_id INT PRIMARY KEY AUTO_INCREMENT,
     transaction_id INT,
-    cost DOUBLE,
-    create_at DATETIME,
-    bank_payment ENUM('bank', 'paypal'),
-    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id)
+    cost DOUBLE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    bank_payment ENUM('bank', 'paypal') NOT NULL,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE payment_service (
     payment_id INT PRIMARY KEY AUTO_INCREMENT,
     transaction_id INT,
     book_id INT,
-    cost DOUBLE,
-    create_at DATETIME,
-    update_at DATETIME,
-    method_payment ENUM('COD', 'Bank'),
-    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id),
-    FOREIGN KEY (book_id) REFERENCES book_services(book_id)
+    cost DOUBLE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    method_payment ENUM('COD', 'Bank') NOT NULL,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (book_id) REFERENCES book_services(book_id) ON DELETE CASCADE ON UPDATE CASCADE
 );

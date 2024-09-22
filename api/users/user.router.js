@@ -15,7 +15,7 @@ router.post('/register', createUser);
 router.post('/login', login);
 router.get('/profile', checkToken, getUserById);
 router.patch('/profile', checkToken, updateUser);
-router.post('/change-password', checkToken, changePassword);
+router.post('/changePassword', checkToken, changePassword);
 router.get('/languages', getLanguages);
 router.patch('/update-details', checkToken, updateUserDetails);
 router.get('/details', checkToken, getUserDetails);

@@ -152,11 +152,25 @@ module.exports = {
                     console.error("Database query error:", error);
                     return callBack(error);
                 }
-                if (results.length > 0 && results[0].languages) {
-                    results[0].languages = JSON.parse(`[${results[0].languages}]`);
-                }
     
-                return callBack(null, results[0]);
+                if (results.length > 0) {
+                    if (results[0].languages) {
+                        let languages = JSON.parse(`[${results[0].languages}]`);
+                        if (languages.length === 1 && languages[0].language_id === null && languages[0].name_language === null) {
+                            results[0].languages = [];
+                        } else {
+                            results[0].languages = languages;
+                        }
+                    } else {
+                        results[0].languages = [];
+                    }
+                    return callBack(null, results[0]);
+                } else {
+                    return callBack(null, {
+                        success: 0,
+                        message: "User not found"
+                    });
+                }
             }
         );
     }
