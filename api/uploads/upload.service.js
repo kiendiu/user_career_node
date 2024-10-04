@@ -31,7 +31,6 @@ const uploadToFirebase = async (file) => {
       blobStream.on('finish', async () => {
         try {
           await blob.makePublic();
-  
           const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
           resolve(publicUrl);
         } catch (err) {
@@ -67,5 +66,6 @@ const uploadAvatar = async (file, userId) => {
 
 module.exports = {
   upload,
+  uploadToFirebase,
   uploadAvatar
 };

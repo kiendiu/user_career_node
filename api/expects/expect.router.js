@@ -7,9 +7,16 @@ const {
     addCertificate,
     updateCertificate,
     deleteCertificate,
-    addSkill,
+    addSkillAndService,
     updateSkill,
-    deleteSkill
+    deleteSkill,
+    getListCategories,
+    getCertificatesByUser,
+    getExperiencesByUser,
+    getSkillsByUser,
+    getDetailsExperience,
+    getDetailSkill,
+    getDetailCertificate
 } = require("./expect.controller");
 
 router.post('/experience', checkToken, addExperience);
@@ -20,8 +27,17 @@ router.post('/certificate', checkToken, addCertificate);
 router.put('/certificate', checkToken, updateCertificate);
 router.delete('/certificate/:id', checkToken, deleteCertificate);
 
-router.post('/skill', checkToken, addSkill);
+router.post('/skill', checkToken, addSkillAndService);
 router.put('/skill', checkToken, updateSkill);
 router.delete('/skill/:id', checkToken, deleteSkill);
+
+router.get('/categories', getListCategories);
+router.get('/experiences', checkToken, getExperiencesByUser);
+router.get('/certificates', checkToken, getCertificatesByUser);
+router.get('/skills', checkToken, getSkillsByUser);
+
+router.get('/experience/:id', checkToken, getDetailsExperience);
+router.get('/skill/:id', checkToken, getDetailSkill);
+router.get('/certificate/:id', checkToken, getDetailCertificate);
 
 module.exports = router;

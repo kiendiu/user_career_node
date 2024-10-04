@@ -1,4 +1,4 @@
-const { uploadAvatar } = require('./upload.service');
+const { uploadAvatar, uploadToFirebase } = require('./upload.service');
 
 const uploadAvatarController = async (req, res) => {
   try {
@@ -16,6 +16,21 @@ const uploadAvatarController = async (req, res) => {
   }
 };
 
+const uploadCertificateController = async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).send('No file uploaded.');
+    }
+    const linkUrl = await uploadToFirebase(file);
+    res.status(200).send({ link_url: linkUrl });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+};
+
 module.exports = {
-  uploadAvatarController
+  uploadAvatarController,
+  uploadCertificateController
 };

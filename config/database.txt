@@ -43,6 +43,7 @@ CREATE TABLE experiences (
     experience_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
     company NVARCHAR(255),
+    position NVARCHAR(255),
     category_id INT,
     start_time DATETIME,
     end_time DATETIME,
