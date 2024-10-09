@@ -79,20 +79,21 @@ CREATE TABLE service_user (
     skill_id INT,
     user_id INT,
     time_online INT,
-    price_online DOUBLE,
+    price_online INT,
     time_offline INT,
-    price_offline DOUBLE,
+    price_offline INT,
+    service_general BIT DEFAULT 0,
     FOREIGN KEY (skill_id) REFERENCES skills(skill_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE service_frame (
     service_frame_id INT PRIMARY KEY AUTO_INCREMENT,
-    service_id INT,
+    user_id INT,
     week_day ENUM('T2', 'T3', 'T4','T5','T6','T7','CN'),
     start_time TIME,
     end_time TIME,
-    FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE user_requests (

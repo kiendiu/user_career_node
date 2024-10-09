@@ -4,7 +4,8 @@ const {
     addServiceFrame,
     updateServiceFrame,
     deleteServiceFrame,
-    updateServiceGeneral
+    updateServiceGeneral,
+    getFramesByUserId
 } = require("./book.service");
 
 module.exports = {
@@ -20,12 +21,11 @@ module.exports = {
                     message: "Database error adding general service"
                 });
             }
-            const service_id = serviceResults.insertId;
             const frameInsertPromises = [];
 
             frames.forEach((frame) => {
                 frameInsertPromises.push(new Promise((resolve, reject) => {
-                    addServiceFrame(service_id, frame.week_day, frame.start_time, frame.end_time, (err, frameResults) => {
+                    addServiceFrame(user_id, frame.week_day, frame.start_time, frame.end_time, (err, frameResults) => {
                         if (err) {
                             return reject(err);
                         }
@@ -42,7 +42,7 @@ module.exports = {
                         frameData: frameResults
                     });
                 })
-                .catch((frameError) => {f
+                .catch((frameError) => {
                     console.log(frameError);
                     return res.status(500).json({
                         success: 0,
@@ -52,6 +52,7 @@ module.exports = {
         });
     },
     updateServiceGeneral: (req, res) => {
+        const user_id = req.decoded.result.user_id;
         const { service_id, time_online, price_online, time_offline, price_offline, frames } = req.body;
         updateServiceGeneral(service_id, time_online, price_online, time_offline, price_offline, (err, serviceResults) => {
             if (err) {
@@ -61,7 +62,7 @@ module.exports = {
                     message: "Database error updating general service"
                 });
             }
-            getFramesByServiceId(service_id, (err, existingFrames) => {
+            getFramesByUserId(user_id, (err, existingFrames) => {
                 if (err) {
                     console.log(err);
                     return res.status(500).json({
@@ -80,7 +81,7 @@ module.exports = {
                 frames.forEach((frame) => {
                     if (!frame.service_frame_id) {
                         framePromises.push(new Promise((resolve, reject) => {
-                            addServiceFrame(service_id, frame.week_day, frame.start_time, frame.end_time, (err, frameResults) => {
+                            addServiceFrame(user_id, frame.week_day, frame.start_time, frame.end_time, (err, frameResults) => { // Use user_id here
                                 if (err) {
                                     return reject(err);
                                 }
@@ -98,6 +99,7 @@ module.exports = {
                         }));
                     }
                 });
+    
                 framesToDelete.forEach((frame) => {
                     framePromises.push(new Promise((resolve, reject) => {
                         deleteServiceFrame(frame.service_frame_id, (err, deleteResults) => {
@@ -108,6 +110,7 @@ module.exports = {
                         });
                     }));
                 });
+    
                 Promise.all(framePromises)
                     .then((frameResults) => {
                         return res.status(200).json({
@@ -147,7 +150,7 @@ module.exports = {
             }
 
             const serviceData = results.reduce((acc, row) => {
-                let service = acc.find(s => s.service_id === row.service_id);
+                let service = acc.find(s => s.user_id === row.user_id);
 
                 if (!service) {
                     service = {
