@@ -6,102 +6,12 @@ const {
     //update expects information
     getLanguages,
     updateUserDetails,
-    getUserDetails,
-    getTop10Experts,
-    getExpertDetailsById,
-    searchExperts,
-    getAppointmentsWithCustomers,
-    getAppointmentsWithExperts
+    getUserDetails
 } = require("./user.service");
 const { sign } = require("jsonwebtoken");
 //const { compareSync, genSaltSync, hashSync } = require("bcrypt");
 
 module.exports = {
-    getTop10Experts: (req, res) => {
-        getTop10Experts((err, results) => {
-            if (err) {
-                return res.status(500).json({
-                    success: 0,
-                    message: "Database connection error"
-                });
-            }
-            return res.status(200).json({
-                success: 1,
-                data: results
-            });
-        });
-    },
-    getAppointmentsWithCustomers: (req, res) => {
-        const userId = req.decoded.result.user_id;
-
-        getAppointmentsWithCustomers(userId, (err, results) => {
-            if (err) {
-                return res.status(500).json({
-                    success: 0,
-                    message: "Database connection error"
-                });
-            }
-            return res.status(200).json({
-                success: 1,
-                data: results
-            });
-        });
-    },
-    getAppointmentsWithExperts: (req, res) => {
-        const userId = req.decoded.result.user_id;
-
-        getAppointmentsWithExperts(userId, (err, results) => {
-            if (err) {
-                return res.status(500).json({
-                    success: 0,
-                    message: "Database connection error"
-                });
-            }
-            return res.status(200).json({
-                success: 1,
-                data: results
-            });
-        });
-    },
-    searchExperts: (req, res) => {
-        const { query, fieldId, size = 20, page = 1 } = req.body;
-
-        searchExperts({ query, fieldId, size, page }, (err, results) => {
-            if (err) {
-                return res.status(500).json({
-                    success: 0,
-                    message: "Search error"
-                });
-            }
-            return res.status(200).json({
-                success: 1,
-                ...results
-            });
-        });
-    },
-    getExpertDetailsById: (req, res) => {
-        const expertId = req.params.id;
-
-        getExpertDetailsById(expertId, (err, results) => {
-            if (err) {
-                return res.status(500).json({
-                    success: 0,
-                    message: "Database connection error"
-                });
-            }
-            if (results) {
-                return res.status(200).json({
-                    success: 1,
-                    data: results
-                });
-            } else {
-                return res.status(404).json({
-                    success: 0,
-                    message: "Expert not found"
-                });
-            }
-        });
-    },
     createUser: (req, res) => {
         const body = req.body;
         // const salt = genSaltSync(10);
