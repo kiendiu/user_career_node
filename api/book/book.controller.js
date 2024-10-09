@@ -5,15 +5,39 @@ const {
     updateServiceFrame,
     deleteServiceFrame,
     updateServiceGeneral,
-    getFramesByUserId
+    getFramesByUserId,
+    getSkillsByUser
 } = require("./book.service");
 
 module.exports = {
+    getSkillsByUser: (req, res) => {
+        const user_id = req.decoded.result.user_id;
+        getSkillsByUser(user_id, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({
+                    success: 0,
+                    message: "Database connection error"
+                });
+            }
+            return res.status(200).json({
+                success: 1,
+                data: results
+            });
+        });
+    },
     addServiceGeneral: (req, res) => {
         const user_id = req.decoded.result.user_id;
-        
-        const { time_online, price_online, time_offline, price_offline, frames } = req.body;
-        addServiceGeneral(user_id, time_online, price_online, time_offline, price_offline, (err, serviceResults) => {
+        const {skill_id, time_online, price_online, time_offline, price_offline, frames } = req.body;
+    
+        if (!Array.isArray(frames)) {
+            return res.status(400).json({
+                success: 0,
+                message: "Frames must be an array"
+            });
+        }
+    
+        addServiceGeneral(user_id, skill_id, time_online, price_online, time_offline, price_offline, (err, serviceResults) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json({
@@ -21,18 +45,18 @@ module.exports = {
                     message: "Database error adding general service"
                 });
             }
-            const frameInsertPromises = [];
-
-            frames.forEach((frame) => {
-                frameInsertPromises.push(new Promise((resolve, reject) => {
+    
+            const frameInsertPromises = frames.map((frame) => {
+                return new Promise((resolve, reject) => {
                     addServiceFrame(user_id, frame.week_day, frame.start_time, frame.end_time, (err, frameResults) => {
                         if (err) {
                             return reject(err);
                         }
                         resolve(frameResults);
                     });
-                }));
+                });
             });
+    
             Promise.all(frameInsertPromises)
                 .then((frameResults) => {
                     return res.status(200).json({
@@ -53,8 +77,17 @@ module.exports = {
     },
     updateServiceGeneral: (req, res) => {
         const user_id = req.decoded.result.user_id;
-        const { service_id, time_online, price_online, time_offline, price_offline, frames } = req.body;
-        updateServiceGeneral(service_id, time_online, price_online, time_offline, price_offline, (err, serviceResults) => {
+        const { service_id, skill_id, time_online, price_online, time_offline, price_offline, frames } = req.body;
+    
+        // Check if frames is defined and is an array
+        if (!Array.isArray(frames)) {
+            return res.status(400).json({
+                success: 0,
+                message: "Frames must be an array"
+            });
+        }
+    
+        updateServiceGeneral(service_id, skill_id, time_online, price_online, time_offline, price_offline, (err, serviceResults) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json({
@@ -62,6 +95,7 @@ module.exports = {
                     message: "Database error updating general service"
                 });
             }
+    
             getFramesByUserId(user_id, (err, existingFrames) => {
                 if (err) {
                     console.log(err);
@@ -76,27 +110,25 @@ module.exports = {
     
                 const framesToDelete = existingFrames.filter(frame => !incomingFrameIds.includes(frame.service_frame_id));
     
-                const framePromises = [];
-    
-                frames.forEach((frame) => {
+                const framePromises = frames.map((frame) => {
                     if (!frame.service_frame_id) {
-                        framePromises.push(new Promise((resolve, reject) => {
-                            addServiceFrame(user_id, frame.week_day, frame.start_time, frame.end_time, (err, frameResults) => { // Use user_id here
+                        return new Promise((resolve, reject) => {
+                            addServiceFrame(user_id, frame.week_day, frame.start_time, frame.end_time, (err, frameResults) => {
                                 if (err) {
                                     return reject(err);
                                 }
                                 resolve(frameResults);
                             });
-                        }));
+                        });
                     } else {
-                        framePromises.push(new Promise((resolve, reject) => {
+                        return new Promise((resolve, reject) => {
                             updateServiceFrame(frame.service_frame_id, frame.week_day, frame.start_time, frame.end_time, (err, frameResults) => {
                                 if (err) {
                                     return reject(err);
                                 }
                                 resolve(frameResults);
                             });
-                        }));
+                        });
                     }
                 });
     
@@ -143,9 +175,18 @@ module.exports = {
             }
 
             if (!results || results.length === 0) {
-                return res.status(404).json({
-                    success: 0,
-                    message: "No general service found for this user",
+                return res.status(200).json({
+                    success: 1,
+                    data: [{
+                        service_id: null,
+                        skill_id: null,
+                        name_skill: null,
+                        time_online: null,
+                        price_online: null,
+                        time_offline: null,
+                        price_offline: null,
+                        frames: []
+                    }],
                 });
             }
 
@@ -155,6 +196,8 @@ module.exports = {
                 if (!service) {
                     service = {
                         service_id: row.service_id,
+                        skill_id: row.skill_id,
+                        name_skill: row.name_skill,
                         time_online: row.time_online,
                         price_online: row.price_online,
                         time_offline: row.time_offline,

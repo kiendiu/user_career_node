@@ -3,7 +3,7 @@ const pool = require("../../config/database");
 module.exports = {
     addServiceGeneral: (user_id, time_online, price_online, time_offline, price_offline, callback) => {
         pool.query(
-            `INSERT INTO service_user (user_id, time_online, price_online, time_offline, price_offline, service_general) VALUES (?, ?, ?, ?, ?, 1)`,
+            `INSERT INTO service_user (user_id, skill_id, time_online, price_online, time_offline, price_offline, service_general) VALUES (?, ?, ?, ?, ?, ?, 1)`,
             [user_id, time_online, price_online, time_offline, price_offline],
             (error, results) => {
                 if (error) {
@@ -15,9 +15,11 @@ module.exports = {
     },
     getServiceGeneral: (user_id, callback) => {
         pool.query(
-            `SELECT su.service_id, su.time_online, su.price_online, su.time_offline, su.price_offline,sf.service_frame_id, sf.week_day, sf.start_time, sf.end_time
+            `SELECT su.service_id, su.time_online, su.price_online, su.time_offline, su.price_offline, su.skill_id, sk.name_skill, 
+                sf.service_frame_id, sf.week_day, sf.start_time, sf.end_time
            FROM service_user su
            LEFT JOIN service_frame sf ON su.user_id = sf.user_id
+           LEFT JOIN skills sk ON su.skill_id = sk.skill_id
            WHERE su.user_id = ? AND su.service_general = 1`,
             [user_id],
             (error, results) => {
@@ -28,10 +30,10 @@ module.exports = {
             }
         );
     },
-    updateServiceGeneral: (service_id, time_online, price_online, time_offline, price_offline, callback) => {
+    updateServiceGeneral: (service_id, skill_id, time_online, price_online, time_offline, price_offline, callback) => {
         pool.query(
-            `UPDATE service_user SET time_online = ?, price_online = ?, time_offline = ?, price_offline = ? WHERE service_id = ?`,
-            [time_online, price_online, time_offline, price_offline, service_id],
+            `UPDATE service_user SET skill_id = ?, time_online = ?, price_online = ?, time_offline = ?, price_offline = ? WHERE service_id = ?`,
+            [skill_id, time_online, price_online, time_offline, price_offline, service_id],
             (error, results) => {
                 if (error) {
                     return callback(error);
@@ -85,6 +87,14 @@ module.exports = {
             }
             callback(null, results);
         });
-    }
-
+    },
+    getSkillsByUser: (userId, callBack) => {
+        const query = "SELECT skill_id, name_skill FROM skills WHERE user_id = ?";
+        pool.query(query, [userId], (error, results) => {
+            if (error) {
+                return callBack(error);
+            }
+            return callBack(null, results);
+        });
+    },
 };
