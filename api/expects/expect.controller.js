@@ -15,10 +15,103 @@ const {
     getSkillsByUser,
     getDetailsExperienceService,
     getDetailSkillService,
-    getDetailCertificateService
+    getDetailCertificateService,
+    getExperts,
+    getExpertDetails,
+    getExpertLanguagesByExpect,
+    getExperiencesByExpect,
+    getSkillsByExpect,
+    getReviewsByExpert
 } = require("./expect.service");
 
 module.exports = {
+    getExpertInfo: (req, res) => {
+        const expertId = req.params.id;
+        getExpertDetails(expertId, (error, expertInfo) => {
+            if (error) {
+                return res.status(500).json({
+                    message: "Error fetching expert details",
+                    error: error
+                });
+            }
+
+            if (!expertInfo) {
+                return res.status(404).json({ message: "Expert not found" });
+            }
+
+            getExpertLanguagesByExpect(expertId, (error, languages) => {
+                if (error) {
+                    return res.status(500).json({
+                        message: "Error fetching expert languages",
+                        error: error
+                    });
+                }
+
+                expertInfo.infor = {
+                    language: languages.languages,
+                    experience_year: expertInfo.experience_years,
+                    skill_description: expertInfo.skill_description
+                };
+                getExperiencesByExpect(expertId, (error, experiences) => {
+                    if (error) {
+                        return res.status(500).json({
+                            message: "Error fetching experiences",
+                            error: error
+                        });
+                    }
+
+                    expertInfo.experience = experiences;
+                    getSkillsByExpect(expertId, (error, skills) => {
+                        if (error) {
+                            return res.status(500).json({
+                                message: "Error fetching skills",
+                                error: error
+                            });
+                        }
+
+                        expertInfo.skill = skills;
+                        getReviewsByExpert(expertId, (error, reviews) => {
+                            if (error) {
+                                return res.status(500).json({
+                                    message: "Error fetching reviews",
+                                    error: error
+                                });
+                            }
+
+                            expertInfo.review = {
+                                average_rating: reviews.average_rating,
+                                total_review: reviews.total_review,
+                                evaluate: JSON.parse(`[${reviews.evaluate}]`)
+                            };
+                            return res.status(200).json(expertInfo);
+                        });
+                    });
+                });
+            });
+        });
+    },
+    getExperts: (req, res) => {
+        const size = parseInt(req.query.size) || 20;
+        const page = parseInt(req.query.page) || 1;
+        const searchText = req.query.search_text || '';
+        const categoryId = req.query.category_id || null;
+        const excludeUserId = req.query.exclude_user_id || null;
+
+        getExperts(size, page, searchText, categoryId, excludeUserId, (error, result) => {
+            if (error) {
+                return res.status(500).json({ error: error.message });
+            }
+            const metadata = {
+                size,
+                page,
+                total_page: Math.ceil(result.total / size),
+                total: result.total,
+                search_text: searchText,
+                category_id: categoryId
+            };
+            res.json({ data: result.experts, metadata });
+        });
+    },
     addExperience: (req, res) => {
         const data = req.body;
         addExperience(data, (err, results) => {

@@ -32,16 +32,39 @@ module.exports = {
     },
     updateServiceGeneral: (service_id, skill_id, time_online, price_online, time_offline, price_offline, callback) => {
         pool.query(
-            `UPDATE service_user SET skill_id = ?, time_online = ?, price_online = ?, time_offline = ?, price_offline = ? WHERE service_id = ?`,
-            [skill_id, time_online, price_online, time_offline, price_offline, service_id],
-            (error, results) => {
+            `UPDATE service_user SET service_general = 0 WHERE user_id = 
+            (SELECT user_id FROM service_user WHERE service_id = ?)`,
+            [service_id],
+            (error, updateResults) => {
                 if (error) {
                     return callback(error);
                 }
-                return callback(null, results);
+                pool.query(
+                    `UPDATE service_user SET skill_id = ?, time_online = ?, price_online = ?, time_offline = ?, price_offline = ?, service_general = 1 
+                    WHERE service_id = ?`,
+                    [skill_id, time_online, price_online, time_offline, price_offline, service_id],
+                    (error, results) => {
+                        if (error) {
+                            return callback(error);
+                        }
+                        return callback(null, results);
+                    }
+                );
             }
         );
     },
+    // updateServiceGeneral: (service_id, skill_id, time_online, price_online, time_offline, price_offline, callback) => {
+    //     pool.query(
+    //         `UPDATE service_user SET skill_id = ?, time_online = ?, price_online = ?, time_offline = ?, price_offline = ? WHERE service_id = ?`,
+    //         [skill_id, time_online, price_online, time_offline, price_offline, service_id],
+    //         (error, results) => {
+    //             if (error) {
+    //                 return callback(error);
+    //             }
+    //             return callback(null, results);
+    //         }
+    //     );
+    // },
     addServiceFrame: (user_id, week_day, start_time, end_time, callback) => {
         pool.query(
             `INSERT INTO service_frame (user_id, week_day, start_time, end_time) VALUES (?, ?, ?, ?)`,
