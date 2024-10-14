@@ -79,12 +79,10 @@ module.exports = {
             return callback(null, results);
         });
     },
-
-    // Lấy thông tin đánh giá của chuyên gia
     getReviewsByExpert: (expertId, callback) => {
         const query = `
             SELECT AVG(r.rating) AS average_rating, COUNT(r.review_id) AS total_review,
-            GROUP_CONCAT(JSON_OBJECT('customer_avatar', u.avatar, 'rating', r.rating, 'review_description', r.review_description) SEPARATOR ', ') AS evaluate
+            GROUP_CONCAT(JSON_OBJECT('customer_name', u.username, 'customer_avatar', u.avatar, 'rating', r.rating, 'review_description', r.review_description, 'created_at', r.created_at) SEPARATOR ', ') AS evaluate
             FROM service_reviews r
             JOIN users u ON u.user_id = r.user_id
             WHERE r.expert_id = ?

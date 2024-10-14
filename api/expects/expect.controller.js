@@ -25,8 +25,10 @@ const {
 } = require("./expect.service");
 
 module.exports = {
+    //danh sách và thông tin chuyên gia ở trang home
     getExpertInfo: (req, res) => {
         const expertId = req.params.id;
+    
         getExpertDetails(expertId, (error, expertInfo) => {
             if (error) {
                 return res.status(500).json({
@@ -34,11 +36,11 @@ module.exports = {
                     error: error
                 });
             }
-
+    
             if (!expertInfo) {
                 return res.status(404).json({ message: "Expert not found" });
             }
-
+    
             getExpertLanguagesByExpect(expertId, (error, languages) => {
                 if (error) {
                     return res.status(500).json({
@@ -46,12 +48,13 @@ module.exports = {
                         error: error
                     });
                 }
-
+    
                 expertInfo.infor = {
                     language: languages.languages,
                     experience_year: expertInfo.experience_years,
                     skill_description: expertInfo.skill_description
                 };
+    
                 getExperiencesByExpect(expertId, (error, experiences) => {
                     if (error) {
                         return res.status(500).json({
@@ -59,8 +62,9 @@ module.exports = {
                             error: error
                         });
                     }
-
-                    expertInfo.experience = experiences;
+    
+                    expertInfo.experience = experiences.length > 0 ? experiences : null;
+    
                     getSkillsByExpect(expertId, (error, skills) => {
                         if (error) {
                             return res.status(500).json({
@@ -68,8 +72,9 @@ module.exports = {
                                 error: error
                             });
                         }
-
-                        expertInfo.skill = skills;
+    
+                        expertInfo.skill = skills.length > 0 ? skills : null;
+    
                         getReviewsByExpert(expertId, (error, reviews) => {
                             if (error) {
                                 return res.status(500).json({
@@ -77,12 +82,13 @@ module.exports = {
                                     error: error
                                 });
                             }
-
+    
                             expertInfo.review = {
-                                average_rating: reviews.average_rating,
-                                total_review: reviews.total_review,
-                                evaluate: JSON.parse(`[${reviews.evaluate}]`)
+                                average_rating: reviews.average_rating || null,
+                                total_review: reviews.total_review || 0,
+                                evaluate: reviews.evaluate && reviews.evaluate !== '' ? JSON.parse(`[${reviews.evaluate}]`) : null
                             };
+    
                             return res.status(200).json(expertInfo);
                         });
                     });
@@ -112,6 +118,7 @@ module.exports = {
             res.json({ data: result.experts, metadata });
         });
     },
+    //đây là danh sách chuyên gia ở trang home
     addExperience: (req, res) => {
         const data = req.body;
         addExperience(data, (err, results) => {
