@@ -100,7 +100,9 @@ CREATE TABLE user_requests (
     request_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
     title VARCHAR(255) NOT NULL,
+    budget INT,
     description TEXT,
+    category_id int
     contact_method ENUM('online', 'offline') NOT NULL,
     bidding_end_date DATETIME NOT NULL,
     location_name VARCHAR(255),
@@ -108,21 +110,29 @@ CREATE TABLE user_requests (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     status ENUM('open', 'closed') DEFAULT 'open',
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE EVENT update_request_status
+ON SCHEDULE EVERY 1 HOUR
+DO
+  UPDATE user_requests 
+  SET status = 'closed' 
+  WHERE bidding_end_date < NOW() AND status = 'open';
 
 CREATE TABLE bids (
     bid_id INT PRIMARY KEY AUTO_INCREMENT,
     expert_id INT,
     request_id INT,
-    price DOUBLE NOT NULL,
+    price INT NOT NULL,
     description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('pending', 'accepted', 'rejected', 'withdrawn') DEFAULT 'pending',
+    status ENUM('pending', 'accepted', 'rejected', 'completed') DEFAULT 'pending',
     FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
+//cai nay hoi thua co le se phai xoa di
 CREATE TABLE request_progress (
     progress_id INT PRIMARY KEY AUTO_INCREMENT,
     request_id INT,
@@ -150,8 +160,8 @@ CREATE TABLE transactions (
     transaction_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
     type ENUM('service', 'deposit'),
-    amount DOUBLE,
-    status ENUM('pending', 'completed', 'failed'),
+    amount INT,
+    status ENUM('completed', 'failed'),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -162,7 +172,7 @@ CREATE TABLE request_payments (
     request_id INT NOT NULL,
     transaction_id INT NOT NULL,
     amount DOUBLE NOT NULL,
-    payment_method ENUM('COD', 'Bank', 'Paypal') NOT NULL,
+    payment_method ENUM() NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -177,6 +187,9 @@ CREATE TABLE book_services (
     duration INT NOT NULL, -- thời lượng dịch vụ (phút)
     total_price DOUBLE NOT NULL,
     note_message TEXT,
+    contact_method ENUM('online', 'offline'),
+    location_name VARCHAR(255),
+    address TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     status ENUM('pending', 'confirmed', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
     FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -200,9 +213,8 @@ CREATE TABLE service_reviews (
 CREATE TABLE wallet_deposit (
     deposit_id INT PRIMARY KEY AUTO_INCREMENT,
     transaction_id INT,
-    cost DOUBLE NOT NULL,
+    cost INT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    bank_payment ENUM('bank', 'paypal') NOT NULL,
     FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 

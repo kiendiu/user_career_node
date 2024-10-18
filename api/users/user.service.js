@@ -1,5 +1,4 @@
 const pool = require("../../config/database");
-const { client } = require('../../config/elasticsearch');
 
 module.exports = {
     createUser: (data, callBack) => {
