@@ -25,6 +25,18 @@ CREATE TABLE users (
     experience_years INT,
     skill_description TEXT
 );
+CREATE TABLE languages (
+    language_id INT PRIMARY KEY AUTO_INCREMENT,
+    name_language NVARCHAR(255) NOT NULL
+);
+
+CREATE TABLE user_languages (
+    user_id INT,
+    language_id INT,
+    PRIMARY KEY (user_id, language_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (language_id) REFERENCES languages(language_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
 
 CREATE TABLE experiences (
     experience_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -85,7 +97,8 @@ CREATE TABLE service_frame (
 
 CREATE TABLE book_services (
     book_id INT PRIMARY KEY AUTO_INCREMENT,
-    service_id INT NOT NULL,
+    service_id INT,
+    request_id INT,
     user_id INT NOT NULL,
     expert_id INT NOT NULL,
     schedule_time DATETIME NOT NULL,
@@ -98,6 +111,7 @@ CREATE TABLE book_services (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     status ENUM('pending', 'confirmed', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
     FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -121,7 +135,7 @@ CREATE TABLE user_requests (
     title VARCHAR(255) NOT NULL,
     budget INT,
     description TEXT,
-    category_id INT, -- Added missing comma
+    category_id INT,
     contact_method ENUM('online', 'offline') NOT NULL,
     bidding_end_date DATETIME NOT NULL,
     location_name VARCHAR(255),
@@ -187,6 +201,7 @@ CREATE TABLE wallet_deposit (
 CREATE TABLE payment_service (
     payment_id INT PRIMARY KEY AUTO_INCREMENT,
     transaction_id INT,
+    expert_id,
     request_id INT,
     book_id INT,
     cost INT NOT NULL,
@@ -194,6 +209,7 @@ CREATE TABLE payment_service (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     method_payment ENUM('COD', 'Bank') NOT NULL,
+    FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (book_id) REFERENCES book_services(book_id) ON DELETE CASCADE ON UPDATE CASCADE

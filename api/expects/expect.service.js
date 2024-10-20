@@ -1,6 +1,7 @@
 const pool = require("../../config/database");
 
 module.exports = {
+    //xem chi tiet chuyen gia o home page
     getExpertDetails: (expertId, callback) => {
         const query = `
             SELECT 
@@ -8,7 +9,8 @@ module.exports = {
                 u.username, 
                 u.avatar, 
                 s.name_skill AS skill_name, 
-                c.name_category, 
+                c.name_category,
+                su.service_id,
                 su.price_online, 
                 su.price_offline, 
                 su.time_online, 
@@ -63,7 +65,7 @@ module.exports = {
     },
     getSkillsByExpect: (userId, callback) => {
         const query = `
-            SELECT u.avatar, s.name_skill AS skill_name, c.name_category, su.price_online, su.price_offline, su.time_online, su.time_offline, AVG(sr.rating) AS average_rating
+            SELECT u.user_id, u.avatar, su.service_id, s.name_skill AS skill_name, c.name_category, su.price_online, su.price_offline, su.time_online, su.time_offline, AVG(sr.rating) AS average_rating
             FROM skills s
             JOIN service_user su ON su.skill_id = s.skill_id
             JOIN categories c ON s.category_id = c.category_id
@@ -94,7 +96,7 @@ module.exports = {
             return callback(null, results[0]);
         });
     },
-
+    //danh sach chuyen gia o home_page
     getExperts: (size, page, searchText, categoryId, excludeUserId, callBack) => {
         const offset = (page - 1) * size;
     
@@ -154,7 +156,8 @@ module.exports = {
                 return callBack(null, { experts: results, total });
             });
         });
-    },         
+    },  
+    //crud thong tin chuyen gia o more_module       
     addExperience: (data, callBack) => {
         pool.query(
             `INSERT INTO experiences (user_id, company, category_id, start_time, end_time, currently_working, job_description, position)

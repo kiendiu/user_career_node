@@ -1,7 +1,164 @@
 const pool = require("../../config/database");
 
 module.exports = {
-  // 
+  //dat lich va thanh toan tu viec tru vi chuyen tien o home_module
+  createBooking: (data, callBack) => {
+    const query = `
+        INSERT INTO book_services 
+        (service_id, request_id, user_id, expert_id, schedule_time, duration, total_price, note_message, contact_method, location_name, address, created_at, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'pending');
+    `;
+    pool.getConnection((err, connection) => {
+      if (err) {
+        return callBack(err);
+      }
+      connection.beginTransaction((err) => {
+        if (err) {
+          connection.release();
+          return callBack(err);
+        }
+
+        connection.query(
+          query,
+          [
+            data.service_id || null,
+            data.request_id || null,
+            data.user_id,
+            data.expert_id,
+            data.schedule_time,
+            data.duration,
+            data.total_price,
+            data.note_message || null,
+            data.contact_method,
+            data.location_name || null,
+            data.address || null
+          ],
+          (error, results) => {
+            if (error) {
+              return connection.rollback(() => {
+                connection.release();
+                return callBack(error);
+              });
+            }
+
+            const bookIdQuery = "SELECT LAST_INSERT_ID() as book_id";
+            connection.query(bookIdQuery, [], (error, result) => {
+              if (error) {
+                return connection.rollback(() => {
+                  connection.release();
+                  return callBack(error);
+                });
+              }
+
+              connection.commit((err) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    return callBack(err);
+                  });
+                }
+
+                connection.release();
+                return callBack(null, result[0]);
+              });
+            });
+          }
+        );
+      });
+    });
+  },
+  updateBookingStatus: (bookId, status, callBack) => {
+    pool.query(
+      `UPDATE book_services SET status = ? WHERE book_id = ?`,
+      [status, bookId],
+      (error, results) => {
+          if (error) {
+              return callBack(error);
+          }
+          return callBack(null, results);
+      }
+    );
+  },
+  deleteBooking: (bookId, callBack) => {
+    const query = `DELETE FROM book_services WHERE book_id = ?`;
+    pool.query(query, [bookId], (error, results) => {
+      if (error) {
+        return callBack(error);
+      }
+      return callBack(null, results);
+    });
+  },
+
+  getBookingById: (bookId, callBack) => {
+    const query = `SELECT * FROM book_services WHERE book_id = ?`;
+    pool.query(query, [bookId], (error, results) => {
+      if (error) {
+        return callBack(error);
+      }
+      return callBack(null, results[0]);
+    });
+  },
+  createTransaction: (data, callBack) => {
+    const query = `
+        INSERT INTO transactions (user_id, type, amount, content, created_at) 
+        VALUES (?, 'service', ?, ?, NOW());
+    `;
+    pool.query(
+        query,
+        [
+            data.user_id,
+            data.amount,
+            data.content
+        ],
+        (error, results) => {
+            if (error) {
+                return callBack(error);
+            }
+            return callBack(null, results.insertId);
+        }
+    );
+},
+
+createPaymentService: (data, transactionId, callBack) => {
+  const query = `
+      INSERT INTO payment_service (transaction_id, expert_id, request_id, book_id, cost, content, method_payment, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW());
+  `;
+  pool.query(
+      query,
+      [
+          transactionId,
+          data.expert_id,
+          data.request_id,
+          data.book_id,
+          data.cost,
+          data.content,
+          data.method_payment
+      ],
+      (error, results) => {
+          if (error) {
+              return callBack(error);
+          }
+          return callBack(null, results);
+      }
+  );
+},
+updateWalletBalances: (customerId, expertId, cost, callBack) => {
+  const query = `
+      UPDATE users AS customer, users AS expert
+      SET customer.balance_wallet = customer.balance_wallet - ?,
+          expert.balance_wallet = expert.balance_wallet + ?
+      WHERE customer.user_id = ? AND expert.user_id = ?;
+  `;
+
+  pool.query(query, [cost, cost, customerId, expertId], (error, results) => {
+      if (error) {
+          return callBack(error);
+      }
+      return callBack(null, results);
+  });
+},
+//lay danh sach yeu cau o request_module
   getRequestsGeneral: (size, page, excludeUserId, callBack) => {
     const offset = (page - 1) * size;
 
