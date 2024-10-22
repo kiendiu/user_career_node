@@ -47,7 +47,7 @@ module.exports = {
             if (!results) {
                 return res.status(401).json({
                     success: 0,
-                    data: "Invalid email or password"
+                    message: "Nhập sai mật khẩu hoặc email !"
                 });
             }
             //const result = compareSync(body.password, results.password);
@@ -69,7 +69,7 @@ module.exports = {
             } else {
                 return res.status(401).json({
                     success: 0,
-                    data: "Invalid email or password"
+                    message: "Nhập sai mật khẩu hoặc email !"
                 });
             }
         });

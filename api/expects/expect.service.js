@@ -65,13 +65,28 @@ module.exports = {
     },
     getSkillsByExpect: (userId, callback) => {
         const query = `
-            SELECT u.user_id, u.avatar, su.service_id, s.name_skill AS skill_name, c.name_category, su.price_online, su.price_offline, su.time_online, su.time_offline, AVG(sr.rating) AS average_rating
+            SELECT u.user_id, 
+                u.avatar, 
+                su.service_id, 
+                s.name_skill AS skill_name, 
+                c.name_category, 
+                su.price_online, 
+                su.price_offline, 
+                su.time_online, 
+                su.time_offline, 
+                AVG(sr.rating) AS average_rating
             FROM skills s
             JOIN service_user su ON su.skill_id = s.skill_id
             JOIN categories c ON s.category_id = c.category_id
             JOIN users u ON u.user_id = s.user_id
             LEFT JOIN service_reviews sr ON sr.expert_id = u.user_id
-            WHERE s.user_id = ? AND su.service_general = 0
+            WHERE s.user_id = ? 
+            AND su.service_general = 0
+            AND s.skill_id NOT IN (
+                    SELECT skill_id 
+                    FROM service_user 
+                    WHERE service_general = 0
+                )
             GROUP BY su.service_id;
         `;
         pool.query(query, [userId], (error, results) => {

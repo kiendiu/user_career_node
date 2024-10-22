@@ -169,7 +169,7 @@ module.exports = {
     });
   },
   deleteBooking: (req, res) => {
-    const { book_id } = req.body;
+    const { id: book_id } = req.params;
 
     if (!book_id) {
       return res.status(400).json({
