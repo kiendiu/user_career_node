@@ -159,68 +159,74 @@ updateWalletBalances: (customerId, expertId, cost, callBack) => {
   });
 },
 //lay danh sach yeu cau o request_module
-  getRequestsGeneral: (size, page, excludeUserId, callBack) => {
-    const offset = (page - 1) * size;
+getRequestsGeneral: (size, page, excludeUserId, callBack) => {
+  const offset = (page - 1) * size;
 
-    const excludeUserCondition = excludeUserId ? `WHERE ur.user_id != ?` : '';
+  let whereConditions = `WHERE ur.status = 'open'`;
+  let queryParams = [size, offset];
 
-    const query = `
-        SELECT ur.request_id, ur.title, ur.description, ur.category_id, c.name_category, ur.contact_method, 
-               ur.bidding_end_date, ur.location_name, ur.address, ur.status, ur.created_at, ur.updated_at,
-               ur.budget,
-               COUNT(b.bid_id) AS total_bids,
-               IFNULL(GROUP_CONCAT(
-                   CONCAT(
-                       '{"bid_id":', b.bid_id, ',',
-                       '"expert_id":', b.expert_id, ',',
-                       '"request_id":', ur.request_id, ',',
-                       '"price":', b.price, ',',
-                       '"description":"', b.description, '",',
-                       '"created_at":"', b.created_at, '",',
-                       '"status":"', b.status, '",',
-                       '"request_title":"', ur.title, '",',
-                       '"category_id":', ur.category_id, ',',
-                       '"name_category":"', c.name_category, '"}'
-                   )
-               ), NULL) AS expert_bids
-        FROM user_requests ur
-        JOIN categories c ON ur.category_id = c.category_id
-        LEFT JOIN bids b ON ur.request_id = b.request_id
-        ${excludeUserCondition}
-        GROUP BY ur.request_id
-        ORDER BY ur.created_at DESC
-        LIMIT ? OFFSET ?;
-    `;
+  if (excludeUserId) {
+      whereConditions += ` AND ur.user_id != ?`;
+      queryParams = [excludeUserId, size, offset];
+  }
 
-    const queryParams = excludeUserId ? [excludeUserId, size, offset] : [size, offset];
+  const query = `
+      SELECT ur.request_id, ur.title, ur.description, ur.category_id, c.name_category, ur.contact_method, 
+             ur.bidding_end_date, ur.location_name, ur.address, ur.status, ur.created_at, ur.updated_at,
+             ur.budget,
+             COUNT(b.bid_id) AS total_bids,
+             IFNULL(GROUP_CONCAT(
+                 CONCAT(
+                     '{"bid_id":', b.bid_id, ',',
+                     '"expert_id":', b.expert_id, ',',
+                     '"request_id":', ur.request_id, ',',
+                     '"price":', b.price, ',',
+                     '"description":"', b.description, '",',
+                     '"change_reason":"', IFNULL(b.change_reason, ''), '",',
+                     '"created_at":"', b.created_at, '",',
+                     '"status":"', b.status, '",',
+                     '"request_title":"', ur.title, '",',
+                     '"category_id":', ur.category_id, ',',
+                     '"name_category":"', c.name_category, '"}'
+                 )
+             ), NULL) AS expert_bids
+      FROM user_requests ur
+      JOIN categories c ON ur.category_id = c.category_id
+      LEFT JOIN bids b ON ur.request_id = b.request_id
+      ${whereConditions}
+      GROUP BY ur.request_id
+      ORDER BY ur.created_at DESC
+      LIMIT ? OFFSET ?;
+  `;
 
-    pool.query(query, queryParams, (error, results) => {
-        if (error) {
-            return callBack(error);
-        }
+  pool.query(query, queryParams, (error, results) => {
+      if (error) {
+          return callBack(error);
+      }
 
-        const totalQuery = `
-            SELECT COUNT(*) AS total
-            FROM user_requests ur
-            ${excludeUserCondition};
-        `;
+      const totalQuery = `
+          SELECT COUNT(*) AS total
+          FROM user_requests ur
+          ${whereConditions};
+      `;
 
-        const totalQueryParams = excludeUserId ? [excludeUserId] : [];
+      const totalQueryParams = excludeUserId ? [excludeUserId] : [];
 
-        pool.query(totalQuery, totalQueryParams, (error, totalResults) => {
-            if (error) {
-                return callBack(error);
-            }
-            const total = totalResults[0].total;
+      pool.query(totalQuery, totalQueryParams, (error, totalResults) => {
+          if (error) {
+              return callBack(error);
+          }
+          const total = totalResults[0].total;
 
-            results.forEach(result => {
-                result.expert_bids = result.expert_bids ? JSON.parse('[' + result.expert_bids + ']') : null;
-            });
+          // Process expert_bids JSON
+          results.forEach(result => {
+              result.expert_bids = result.expert_bids ? JSON.parse('[' + result.expert_bids + ']') : null;
+          });
 
-            return callBack(null, { requests: results, total });
-        });
-    });
-  },
+          return callBack(null, { requests: results, total });
+      });
+  });
+},
   getRequestsMine: (size, page, excludeUserId, status, callBack) => {
     const offset = (page - 1) * size;
 
@@ -251,6 +257,7 @@ updateWalletBalances: (customerId, expertId, cost, callBack) => {
                        '"request_id":', ur.request_id, ',',
                        '"price":', b.price, ',',
                        '"description":"', b.description, '",',
+                       '"change_reason":"', IFNULL(b.change_reason, ''), '",',
                        '"created_at":"', b.created_at, '",',
                        '"status":"', b.status, '",',
                        '"request_title":"', ur.title, '",',
@@ -292,51 +299,102 @@ updateWalletBalances: (customerId, expertId, cost, callBack) => {
         });
     });
   },
+  // getListBids: (userId, size, page, status, callBack) => {
+  //   const offset = (page - 1) * size;
+  
+  //   let conditions = [];
+  //   let queryParams = [];
+  
+  //   let userBidsCondition = 'b.expert_id = ?'; 
+  //   queryParams.push(userId);
+  
+  //   let excludeOwnRequestsCondition = 'r.user_id != ?';
+  //   queryParams.push(userId);
+  
+  //   if (status === 'open') {
+  //     conditions.push('r.status = "open"');
+  //   } else if (status === 'closed') {
+  //     conditions.push('r.status = "closed"');
+  //   }
+  //     const statusClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
+  //     const query = `
+  //     SELECT b.*, r.title AS request_title, r.category_id, c.name_category
+  //     FROM bids b
+  //     JOIN user_requests r ON b.request_id = r.request_id
+  //     JOIN categories c ON r.category_id = c.category_id
+  //     WHERE ${userBidsCondition} AND ${excludeOwnRequestsCondition}
+  //     ${statusClause}
+  //     ORDER BY b.created_at DESC
+  //     LIMIT ? OFFSET ?;
+  //   `;
+  //     queryParams.push(size, offset);
+  
+  //   pool.query(query, queryParams, (error, results) => {
+  //     if (error) {
+  //       return callBack(error);
+  //     }
+  //       const totalQuery = `
+  //       SELECT COUNT(*) AS total
+  //       FROM bids b
+  //       JOIN user_requests r ON b.request_id = r.request_id
+  //       WHERE ${userBidsCondition} AND ${excludeOwnRequestsCondition}
+  //       ${statusClause};
+  //     `;
+  //       pool.query(totalQuery, queryParams.slice(0, queryParams.length - 2), (error, totalResults) => {
+  //       if (error) {
+  //         return callBack(error);
+  //       }
+  //       const total = totalResults[0].total;
+  //       return callBack(null, { bids: results, total });
+  //     });
+  //   });
+  // },
   getListBids: (userId, size, page, status, callBack) => {
     const offset = (page - 1) * size;
-  
     let conditions = [];
     let queryParams = [];
-  
-    let userBidsCondition = 'b.expert_id = ?'; 
-    queryParams.push(userId);
-  
-    let excludeOwnRequestsCondition = 'r.user_id != ?';
-    queryParams.push(userId);
-  
-    if (status === 'open') {
-      conditions.push('r.status = "open"');
-    } else if (status === 'closed') {
-      conditions.push('r.status = "closed"');
+    
+    if (status === 'expert') {
+      // Lấy danh sách các chào giá mà chuyên gia đã chào giá cho người khác
+      conditions.push('b.expert_id = ?');
+      queryParams.push(userId);
+    } else if (status === 'customer') {
+      // Lấy danh sách các chào giá mà các chuyên gia khác đã chào giá yêu cầu của người dùng
+      conditions.push('r.user_id = ?');
+      queryParams.push(userId);
     }
-      const statusClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
-      const query = `
+    
+    const conditionsClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    
+    const query = `
       SELECT b.*, r.title AS request_title, r.category_id, c.name_category
       FROM bids b
       JOIN user_requests r ON b.request_id = r.request_id
       JOIN categories c ON r.category_id = c.category_id
-      WHERE ${userBidsCondition} AND ${excludeOwnRequestsCondition}
-      ${statusClause}
+      ${conditionsClause}
       ORDER BY b.created_at DESC
       LIMIT ? OFFSET ?;
     `;
-      queryParams.push(size, offset);
-  
+    
+    queryParams.push(size, offset);
+    
     pool.query(query, queryParams, (error, results) => {
       if (error) {
         return callBack(error);
       }
-        const totalQuery = `
+      
+      const totalQuery = `
         SELECT COUNT(*) AS total
         FROM bids b
         JOIN user_requests r ON b.request_id = r.request_id
-        WHERE ${userBidsCondition} AND ${excludeOwnRequestsCondition}
-        ${statusClause};
+        ${conditionsClause};
       `;
-        pool.query(totalQuery, queryParams.slice(0, queryParams.length - 2), (error, totalResults) => {
+      
+      pool.query(totalQuery, queryParams.slice(0, queryParams.length - 2), (error, totalResults) => {
         if (error) {
           return callBack(error);
         }
+        
         const total = totalResults[0].total;
         return callBack(null, { bids: results, total });
       });
@@ -383,6 +441,63 @@ updateWalletBalances: (customerId, expertId, cost, callBack) => {
         return callBack(new Error("Request not found or user not authorized."));
       }
       return callBack(null, { message: "Request canceled successfully." });
+    });
+  },
+  //them va udate status của chao giá 
+  addBid: (data, callBack) => {
+    const checkQuery = `
+      SELECT COUNT(*) AS bid_count 
+      FROM bids 
+      WHERE expert_id = ? AND request_id = ?;
+    `;
+  
+    const checkParams = [data.expert_id, data.request_id];
+  
+    pool.query(checkQuery, checkParams, (error, results) => {
+      if (error) {
+        return callBack(error);
+      }
+        if (results[0].bid_count > 0) {
+        return callBack(new Error("Bạn đã chào giá yêu cầu này!"));
+      }
+  
+      const insertQuery = `
+        INSERT INTO bids 
+        (expert_id, request_id, price, description, change_reason, created_at, status) 
+        VALUES (?, ?, ?, ?, ?, NOW(), 'pending');
+      `;
+  
+      const queryParams = [
+        data.expert_id,
+        data.request_id,
+        data.price,
+        data.description,
+        data.change_reason || null
+      ];
+  
+      pool.query(insertQuery, queryParams, (error, result) => {
+        if (error) {
+          return callBack(error);
+        }
+        return callBack(null, result);
+      });
+    });
+  },
+  updateBidStatus : (bidId, newStatus, callBack) => {
+    const query = `
+      UPDATE bids 
+      SET status = ? 
+      WHERE bid_id = ?;
+    `;
+
+    pool.query(query, [newStatus, bidId], (error, result) => {
+      if (error) {
+        return callBack(error);
+      }
+      if (result.affectedRows === 0) {
+        return callBack(new Error("Bid not found or expert not authorized."));
+      }
+      return callBack(null, { message: "Bid status updated successfully." });
     });
   }
 };

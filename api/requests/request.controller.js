@@ -10,7 +10,9 @@ const {
   getBookingById,
   createTransaction,
   createPaymentService,
-  updateWalletBalances
+  updateWalletBalances,
+  addBid,
+  updateBidStatus
 } = require("./request.service");
 
 const pool = require("../../config/database");
@@ -257,7 +259,7 @@ module.exports = {
   getRequestsMine: (req, res) => {
     const size = parseInt(req.query.size) || 20;
     const page = parseInt(req.query.page) || 1;
-    const excludeUserId = req.query.exclude_user_id;
+    const excludeUserId = req.decoded.result.user_id;
     const status = req.query.status || 'open';
 
     getRequestsMine(size, page, excludeUserId, status, (error, result) => {
@@ -276,24 +278,47 @@ module.exports = {
     });
   },
 
+  // getListBids: (req, res) => {
+  //   const size = parseInt(req.query.size) || 20;
+  //   const page = parseInt(req.query.page) || 1;
+  //   const excludeUserId = req.decoded.result.user_id;
+  //   const status = req.query.status;
+
+  //   getListBids(excludeUserId, size, page, status, (error, result) => {
+  //       if (error) {
+  //           return res.status(500).json({ error: error.message });
+  //       }
+  //       const metadata = {
+  //           size,
+  //           page,
+  //           total_page: Math.ceil(result.total / size),
+  //           total: result.total,
+  //           status
+  //       };
+  //       res.json({ data: result.bids, metadata });
+  //   });
+  // },
   getListBids: (req, res) => {
     const size = parseInt(req.query.size) || 20;
     const page = parseInt(req.query.page) || 1;
-    const excludeUserId = req.decoded.result.user_id;
-    const status = req.query.status;
-
-    getListBids(excludeUserId, size, page, status, (error, result) => {
-        if (error) {
-            return res.status(500).json({ error: error.message });
-        }
-        const metadata = {
-            size,
-            page,
-            total_page: Math.ceil(result.total / size),
-            total: result.total,
-            status
-        };
-        res.json({ data: result.bids, metadata });
+    const userId = req.decoded.result.user_id;  // ID người dùng từ token
+    const status = req.query.status;  // "expert" hoặc "customer"
+  
+    // Gọi service để lấy danh sách bids
+    getListBids(userId, size, page, status, (error, result) => {
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      
+      const metadata = {
+        size,
+        page,
+        total_page: Math.ceil(result.total / size),
+        total: result.total,
+        status
+      };
+      
+      res.json({ data: result.bids, metadata });
     });
   },
   addRequest: (req, res) => {
@@ -315,6 +340,46 @@ module.exports = {
         return res.status(500).json({ error: error.message });
       }
       res.json({ message: result.message });
+    });
+  },
+
+//them chao gia của chuyen gia vơi khach hang
+  addBidController: (req, res) => {
+    const body = req.body;
+    const expertId = req.decoded.result.user_id;
+  
+    const bidData = {
+      expert_id: expertId,
+      request_id: body.request_id,
+      price: body.price,
+      description: body.description,
+      change_reason: body.change_reason || null
+    };
+  
+    addBid(bidData, (error, result) => {
+      if (error) {
+        if (error.message === "Bạn đã chào giá yêu cầu này!") {
+          return res.status(400).json({ message: error.message });
+        }
+        return res.status(500).json({ error: error.message });
+      }
+      return res.status(201).json({ message: "Bid added successfully.", bid_id: result.insertId });
+    });
+  },
+  updateBidStatusController : (req, res) => {
+    const bidId = req.params.id;
+    const newStatus = req.params.status;
+
+    const validStatuses = ['pending', 'accepted', 'rejected', 'completed'];
+    if (!validStatuses.includes(newStatus)) {
+        return res.status(400).json({ error: "Invalid status provided." });
+    }
+
+    updateBidStatus(bidId, newStatus, (error, result) => {
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+        res.json({ message: result.message });
     });
   }
 };

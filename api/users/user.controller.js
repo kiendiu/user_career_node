@@ -151,18 +151,14 @@ module.exports = {
                 });
             }
     
-            const isPasswordValid = compareSync(old_password, user.password);
-            if (!isPasswordValid) {
+            if (old_password !== user.password) {
                 return res.status(400).json({
                     success: 0,
                     message: "Old password is incorrect"
                 });
             }
     
-            const salt = genSaltSync(10);
-            const hashedPassword = hashSync(new_password, salt);
-    
-            updateUser(userId, { password: hashedPassword }, (err, results) => {
+            updateUser(userId, { password: new_password }, (err, results) => {
                 if (err) {
                     return res.status(500).json({
                         success: 0,

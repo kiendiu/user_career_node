@@ -160,6 +160,7 @@ CREATE TABLE bids (
     request_id INT,
     price INT NOT NULL,
     description TEXT,
+    change_reason TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     status ENUM('pending', 'accepted', 'rejected', 'completed') DEFAULT 'pending',
     FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
