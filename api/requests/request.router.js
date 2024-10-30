@@ -8,6 +8,7 @@ const {
     cancelRequest,
     createBooking,
     createPayment,
+    createPaymentNoUpdateStatusBooking,
     updateBookingStatus,
     deleteBooking,
     getBookingById,
@@ -24,6 +25,7 @@ router.post('/cancelRequest/:id', checkToken, cancelRequest);
 
 router.post("/booking", checkToken, createBooking);
 router.post("/payment", checkToken, createPayment);
+router.post("/paymentNoUpdateStatusBooking", checkToken, createPaymentNoUpdateStatusBooking);
 router.put("/booking/status", checkToken, updateBookingStatus);
 router.delete("/booking/:id", checkToken, deleteBooking);
 router.get('/booking/:id', checkToken, getBookingById);

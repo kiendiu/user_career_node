@@ -1,13 +1,29 @@
 CREATE TABLE categories (
     category_id INT PRIMARY KEY AUTO_INCREMENT,
-    name_category VARCHAR(255) NOT NULL,
+    name_category VARCHAR(255) ,
     parent_id INT DEFAULT NULL,
     FOREIGN KEY (parent_id) REFERENCES categories(category_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+INSERT INTO categories (name_category, parent_id) VALUES
+    ('Kế toán - thuế', NULL),
+    ('Luật', NULL),
+    ('Digital Marketing', NULL),
+    ('Marketing', NULL),
+    ('Kinh Doanh', NULL),
+    ('Ngoại Ngữ', NULL),
+    ('Tư vấn tâm lý', NULL),
+    ('IT & Software', NULL),
+    ('Dinh dưỡng', NULL),
+    ('Nghệ sĩ', NULL),
+    ('Du học', NULL),
+    ('Xây dựng - Kỹ sư', NULL),
+    ('Graphic & Design', NULL);
+
+
 CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
-    full_name NVARCHAR(255) NOT NULL,
+    full_name NVARCHAR(255) ,
     gender ENUM('Nam', 'Nu', 'Khac'),
     avatar VARCHAR(255),
     birthday DATE,
@@ -29,6 +45,16 @@ CREATE TABLE languages (
     language_id INT PRIMARY KEY AUTO_INCREMENT,
     name_language NVARCHAR(255) NOT NULL
 );
+
+INSERT INTO languages (name_language) VALUES
+('Tiếng Pháp'),
+('Tây Ban Nha'),
+('Tiếng Hàn'),
+('Tiếng Thái'),
+('Tiếng Trung'),
+('Tiếng Anh'),
+('Tiếng Việt'),
+('Tiếng Đức');
 
 CREATE TABLE user_languages (
     user_id INT,
@@ -95,40 +121,6 @@ CREATE TABLE service_frame (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE book_services (
-    book_id INT PRIMARY KEY AUTO_INCREMENT,
-    service_id INT,
-    request_id INT,
-    user_id INT NOT NULL,
-    expert_id INT NOT NULL,
-    schedule_time DATETIME NOT NULL,
-    duration INT NOT NULL,
-    total_price DOUBLE NOT NULL,
-    note_message TEXT,
-    contact_method ENUM('online', 'offline'),
-    location_name VARCHAR(255),
-    address TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('pending', 'confirmed', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
-    FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE TABLE service_reviews (
-    review_id INT PRIMARY KEY AUTO_INCREMENT,
-    book_id INT NOT NULL,
-    user_id INT NOT NULL,
-    expert_id INT NOT NULL,
-    rating TINYINT CHECK(rating >= 1 AND rating <= 5),
-    review_description TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (book_id) REFERENCES book_services(book_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
 CREATE TABLE user_requests (
     request_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
@@ -146,7 +138,6 @@ CREATE TABLE user_requests (
     FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 CREATE EVENT update_request_status
 ON SCHEDULE EVERY 1 HOUR
 DO
@@ -167,14 +158,52 @@ CREATE TABLE bids (
     FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE book_services (
+    book_id INT PRIMARY KEY AUTO_INCREMENT,
+    service_id INT,
+    request_id INT,
+    user_id INT ,
+    expert_id INT ,
+    schedule_time DATETIME,
+    duration INT ,
+    total_price DOUBLE ,
+    note_message TEXT,
+    contact_method ENUM('online', 'offline'),
+    location_name VARCHAR(255),
+    address TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('pending', 'confirmed', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
+    FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE service_reviews (
+    review_id INT PRIMARY KEY AUTO_INCREMENT,
+    book_id INT ,
+    service_id INT ,
+    user_id INT ,
+    expert_id INT ,
+    rating TINYINT CHECK(rating >= 1 AND rating <= 5),
+    review_description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (book_id) REFERENCES book_services(book_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 CREATE TABLE request_review (
     review_id INT PRIMARY KEY AUTO_INCREMENT,
+    book_id INT,
     request_id INT,
     user_id INT,
     rating TINYINT CHECK(rating >= 1 AND rating <= 5),
     review_description TEXT,
     feedback TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (book_id) REFERENCES book_services(book_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -184,7 +213,7 @@ CREATE TABLE transactions (
     user_id INT,
     type ENUM('service', 'deposit'),
     amount INT,
-    content VARCHAR(255), -- Added data type for 'content'
+    content VARCHAR(255),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -202,7 +231,7 @@ CREATE TABLE wallet_deposit (
 CREATE TABLE payment_service (
     payment_id INT PRIMARY KEY AUTO_INCREMENT,
     transaction_id INT,
-    expert_id,
+    expert_id INT,
     request_id INT,
     book_id INT,
     cost INT NOT NULL,

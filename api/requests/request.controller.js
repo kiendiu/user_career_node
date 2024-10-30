@@ -42,11 +42,105 @@ module.exports = {
         });
     });
   },
+  createPaymentNoUpdateStatusBooking : (req, res) => {
+    const { expert_id, book_id, cost, content, method_payment } = req.body;
+    const userId = req.decoded.result.user_id;
+  
+    const getUserWalletQuery = `SELECT full_name, balance_wallet FROM users WHERE user_id = ?`;
+    pool.query(getUserWalletQuery, [userId], (err, userResults) => {
+      if (err || userResults.length === 0) {
+        return res.status(500).json({
+          success: 0,
+          message: "Failed to find user",
+          error: err || 'User not found'
+        });
+      }
+  
+      const customerName = userResults[0].full_name;
+      const customerWallet = userResults[0].balance_wallet;
+  
+      if (customerWallet < cost) {
+        return res.status(400).json({
+          success: 0,
+          message: "Bạn không đủ tài khoản trong ví!"
+        });
+      }
+  
+      // Fetch booking information
+      getBookingById(book_id, (err, booking) => {
+        if (err || !booking) {
+          return res.status(500).json({
+            success: 0,
+            message: "Booking not found",
+            error: err || "Booking ID invalid"
+          });
+        }
+  
+        const { request_id } = booking;
+        const paymentContent = `Thanh toán cho đặt lịch từ %${customerName}% tới chuyên gia %%${expert_id}%%`;
+  
+        const transactionData = {
+          user_id: userId,
+          amount: cost,
+          content: paymentContent
+        };
+  
+        // Create transaction
+        createTransaction(transactionData, (err, transactionId) => {
+          if (err) {
+            return res.status(500).json({
+              success: 0,
+              message: "Failed to create transaction",
+              error: err
+            });
+          }
+  
+          // Update wallet balances
+          updateWalletBalances(userId, expert_id, cost, (err, walletResult) => {
+            if (err) {
+              return res.status(500).json({
+                success: 0,
+                message: "Failed to update wallet balances",
+                error: err
+              });
+            }
+  
+            // Prepare data for payment service creation
+            const paymentServiceData = {
+              transaction_id: transactionId,
+              expert_id,
+              request_id: request_id || null, // Null if no request_id
+              book_id,
+              cost,
+              content: paymentContent,
+              method_payment
+            };
+  
+            // Create payment record
+            createPaymentService(paymentServiceData, transactionId, (err, paymentResult) => {
+              if (err) {
+                return res.status(500).json({
+                  success: 0,
+                  message: "Failed to create payment",
+                  error: err
+                });
+              }
+  
+              return res.status(200).json({
+                success: 1,
+                message: "Payment successful, wallet updated",
+                data: paymentResult
+              });
+            });
+          });
+        });
+      });
+    });
+  },
   createPayment: (req, res) => {
     const body = req.body;
-    const userId = req.decoded.result.user_id; // Lấy user_id từ token
+    const userId = req.decoded.result.user_id;
 
-    // Lấy số dư ví của khách hàng
     const getUserWalletQuery = `
         SELECT full_name, balance_wallet FROM users WHERE user_id = ?
     `;
@@ -63,7 +157,6 @@ module.exports = {
         const customerName = userResults[0].full_name;
         const customerWallet = userResults[0].balance_wallet;
 
-        // Kiểm tra xem số dư ví của khách hàng có đủ không
         if (customerWallet < body.cost) {
             return res.status(400).json({
                 success: 0,
@@ -71,7 +164,6 @@ module.exports = {
             });
         }
 
-        // Lấy tên chuyên gia từ bảng users
         pool.query(getUserWalletQuery, [body.expert_id], (err, expertResults) => {
             if (err || expertResults.length === 0) {
                 return res.status(500).json({
@@ -83,10 +175,8 @@ module.exports = {
 
             const expertName = expertResults[0].full_name;
 
-            // Nội dung với %% bao quanh tên khách hàng và chuyên gia
-            const content = `Thanh toán cho đặt lịch từ %${customerName}% tới chuyên gia %%${expertName}%%`;
+            const content = `Thanh toán cho đặt lịch cho chuyên gia ${expertName}`;
 
-            // Tạo giao dịch trong bảng transactions
             const transactionData = {
                 user_id: userId,
                 amount: body.cost,
@@ -102,7 +192,6 @@ module.exports = {
                     });
                 }
 
-                // Cập nhật số dư ví của khách hàng và chuyên gia
                 updateWalletBalances(userId, body.expert_id, body.cost, (err, walletResult) => {
                     if (err) {
                         return res.status(500).json({
@@ -112,7 +201,6 @@ module.exports = {
                         });
                     }
 
-                    // Sau khi có transaction_id, chèn vào bảng payment_service
                     createPaymentService(body, transactionId, (err, paymentResult) => {
                         if (err) {
                             return res.status(500).json({
@@ -122,7 +210,6 @@ module.exports = {
                             });
                         }
 
-                        // Cập nhật trạng thái booking thành 'confirmed'
                         updateBookingStatus(body.book_id, 'confirmed', (err, statusResult) => {
                             if (err) {
                                 return res.status(500).json({

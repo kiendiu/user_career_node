@@ -7,6 +7,8 @@ const expectRouter = require("./api/expects/expect.router");
 const uploadRouter = require("./api/uploads/upload.router");
 const bookRouter = require("./api/book/book.router");
 const requestRouter = require("./api/requests/request.router");
+const manageRouter = require("./api/manages/manage.router");
+const walletRouter = require("./api/wallet/wallet.router");
 
 app.use(express.json());
 
@@ -15,6 +17,8 @@ app.use("/api/expects", expectRouter);
 app.use('/api/uploads', uploadRouter);
 app.use('/api/book', bookRouter);
 app.use('/api/requests', requestRouter);
+app.use('/api/manages', manageRouter);
+app.use("/api/wallet", walletRouter);
 
 
 const port = process.env.PORT;
