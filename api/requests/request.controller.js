@@ -160,7 +160,6 @@ module.exports = {
         if (customerWallet < body.cost) {
             return res.status(400).json({
                 success: 0,
-                message: "Bạn không đủ tài khoản trong ví!"
             });
         }
 
@@ -365,49 +364,27 @@ module.exports = {
     });
   },
 
-  // getListBids: (req, res) => {
-  //   const size = parseInt(req.query.size) || 20;
-  //   const page = parseInt(req.query.page) || 1;
-  //   const excludeUserId = req.decoded.result.user_id;
-  //   const status = req.query.status;
-
-  //   getListBids(excludeUserId, size, page, status, (error, result) => {
-  //       if (error) {
-  //           return res.status(500).json({ error: error.message });
-  //       }
-  //       const metadata = {
-  //           size,
-  //           page,
-  //           total_page: Math.ceil(result.total / size),
-  //           total: result.total,
-  //           status
-  //       };
-  //       res.json({ data: result.bids, metadata });
-  //   });
-  // },
   getListBids: (req, res) => {
     const size = parseInt(req.query.size) || 20;
     const page = parseInt(req.query.page) || 1;
-    const userId = req.decoded.result.user_id;  // ID người dùng từ token
-    const status = req.query.status;  // "expert" hoặc "customer"
-  
-    // Gọi service để lấy danh sách bids
-    getListBids(userId, size, page, status, (error, result) => {
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-      
-      const metadata = {
-        size,
-        page,
-        total_page: Math.ceil(result.total / size),
-        total: result.total,
-        status
-      };
-      
-      res.json({ data: result.bids, metadata });
+    const excludeUserId = req.decoded.result.user_id;
+    const status = req.query.status;
+
+    getListBids(excludeUserId, size, page, status, (error, result) => {
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+        const metadata = {
+            size,
+            page,
+            total_page: Math.ceil(result.total / size),
+            total: result.total,
+            status
+        };
+        res.json({ data: result.bids, metadata });
     });
   },
+  
   addRequest: (req, res) => {
     const body = req.body;
 

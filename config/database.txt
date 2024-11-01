@@ -172,12 +172,21 @@ CREATE TABLE book_services (
     location_name VARCHAR(255),
     address TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cancel_reason TEXT,
     status ENUM('pending', 'confirmed', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
     FOREIGN KEY (service_id) REFERENCES service_user(service_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (request_id) REFERENCES user_requests(request_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (expert_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE EVENT CancelPendingBookings
+ON SCHEDULE EVERY 1 DAY
+DO
+    UPDATE book_services
+    SET status = 'cancelled'
+    WHERE schedule_time < NOW() - INTERVAL 1 DAY
+    AND status != 'completed';
 
 CREATE TABLE service_reviews (
     review_id INT PRIMARY KEY AUTO_INCREMENT,

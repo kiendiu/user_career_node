@@ -98,13 +98,38 @@ module.exports = {
     },
     getReviewsByExpert: (expertId, callback) => {
         const query = `
-            SELECT AVG(r.rating) AS average_rating, COUNT(r.review_id) AS total_review,
-            GROUP_CONCAT(JSON_OBJECT('customer_name', u.username, 'customer_avatar', u.avatar, 'rating', r.rating, 'review_description', r.review_description, 'created_at', r.created_at) SEPARATOR ', ') AS evaluate
-            FROM service_reviews r
-            JOIN users u ON u.user_id = r.user_id
-            WHERE r.expert_id = ?
+            SELECT AVG(rating) AS average_rating, COUNT(*) AS total_review,
+            GROUP_CONCAT(JSON_OBJECT(
+                'customer_name', customer_name,
+                'customer_avatar', customer_avatar,
+                'rating', rating,
+                'review_description', review_description,
+                'created_at', created_at
+            ) SEPARATOR ', ') AS evaluate
+            FROM (
+                SELECT 
+                    u.username AS customer_name, 
+                    u.avatar AS customer_avatar, 
+                    r.rating, 
+                    r.review_description, 
+                    r.created_at
+                FROM service_reviews r
+                JOIN users u ON u.user_id = r.user_id
+                WHERE r.expert_id = ?
+                UNION ALL
+                SELECT 
+                    u.username AS customer_name, 
+                    u.avatar AS customer_avatar, 
+                    rr.rating, 
+                    rr.review_description, 
+                    rr.created_at
+                FROM request_review rr
+                JOIN book_services bs ON bs.book_id = rr.book_id
+                JOIN users u ON u.user_id = rr.user_id
+                WHERE bs.expert_id = ?
+            ) AS combined_reviews
         `;
-        pool.query(query, [expertId], (error, results) => {
+        pool.query(query, [expertId, expertId], (error, results) => {
             if (error) {
                 return callback(error);
             }
@@ -133,13 +158,20 @@ module.exports = {
     
         const query = `
             SELECT e.user_id, e.username, e.avatar, s.name_skill AS skill_name, c.name_category,
-                   su.price_online, su.price_offline, su.time_online, su.time_offline,
-                   COALESCE(AVG(sr.rating), 0) AS average_rating
+               su.price_online, su.price_offline, su.time_online, su.time_offline,
+               COALESCE(AVG(rating.rating), 0) AS average_rating
             FROM users e
             JOIN service_user su ON e.user_id = su.user_id
             JOIN skills s ON su.skill_id = s.skill_id
             JOIN categories c ON s.category_id = c.category_id
-            LEFT JOIN service_reviews sr ON e.user_id = sr.expert_id
+            LEFT JOIN (
+                SELECT expert_id, rating
+                FROM service_reviews
+                UNION ALL
+                SELECT bs.expert_id, rating
+                FROM request_review rr
+                JOIN book_services bs ON bs.book_id = rr.book_id
+            ) AS rating ON e.user_id = rating.expert_id
             WHERE su.service_general = 1
             ${searchCondition}
             ${categoryCondition}
@@ -387,7 +419,7 @@ module.exports = {
             FROM skills 
             JOIN categories ON skills.category_id = categories.category_id
             LEFT JOIN service_user ON skills.skill_id = service_user.skill_id
-            WHERE skills.user_id = ? 
+            WHERE skills.user_id = ? and service_user.service_general = 0
             LIMIT ? OFFSET ?`,
             [userId, size, offset],
             (error, results) => {

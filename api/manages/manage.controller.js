@@ -2,7 +2,8 @@ const {
     getBookedServices,
     getConsultationSchedule,
     updateServiceStatus,
-    addReview
+    addReview,
+    updateCancelReason
 } = require("./manage.service");
 
 module.exports = {
@@ -95,6 +96,21 @@ module.exports = {
                 return res.status(500).json({ success: 0, message: error.message });
             }
             return res.json({ success: 1, data: result });
+        });
+    },
+    updateCancelReasonController: (req, res) => {
+        const { bookId } = req.params;
+        const { cancel_reason } = req.body;
+    
+        if (!cancel_reason) {
+            return res.status(400).json({ error: "Cancel reason is required." });
+        }
+    
+        updateCancelReason(bookId, cancel_reason, (error, result) => {
+            if (error) {
+                return res.status(500).json({ error: error.message });
+            }
+            res.json({ message: result.message });
         });
     }
 }
