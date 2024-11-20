@@ -23,12 +23,8 @@ INSERT INTO categories (name_category, parent_id) VALUES
 
 CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
-    full_name NVARCHAR(255) ,
-    gender ENUM('Nam', 'Nu', 'Khac'),
     avatar VARCHAR(255),
-    birthday DATE,
     phone VARCHAR(11) UNIQUE,
-    social_media_url VARCHAR(255),
     address VARCHAR(255),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -37,9 +33,9 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE,
     password VARCHAR(255),
     operator_status BIT,
-    role ENUM('admin', 'user'),
     experience_years INT,
-    skill_description TEXT
+    skill_description TEXT,
+    is_approval BIT,
 );
 CREATE TABLE languages (
     language_id INT PRIMARY KEY AUTO_INCREMENT,

@@ -9,6 +9,7 @@ const bookRouter = require("./api/book/book.router");
 const requestRouter = require("./api/requests/request.router");
 const manageRouter = require("./api/manages/manage.router");
 const walletRouter = require("./api/wallet/wallet.router");
+const adminRouter = require("./api/admin/admin.router");
 
 app.use(express.json());
 
@@ -19,6 +20,7 @@ app.use('/api/book', bookRouter);
 app.use('/api/requests', requestRouter);
 app.use('/api/manages', manageRouter);
 app.use("/api/wallet", walletRouter);
+app.use("/api/admin", adminRouter);
 
 
 const port = process.env.PORT;
