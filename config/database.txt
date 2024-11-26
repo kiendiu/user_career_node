@@ -35,7 +35,8 @@ CREATE TABLE users (
     operator_status BIT,
     experience_years INT,
     skill_description TEXT,
-    is_approval BIT,
+    approval ENUM('user','pending', 'rejected', 'accepted'),
+    reason_reject NVARCHAR(255)
 );
 CREATE TABLE languages (
     language_id INT PRIMARY KEY AUTO_INCREMENT,

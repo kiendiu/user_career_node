@@ -1,15 +1,27 @@
 const pool = require("../../config/database");
 
 module.exports = {
+    getUserByEmailOrPhone: (email, phone, callback) => {
+        pool.query(
+            `SELECT * FROM users WHERE email = ? OR phone = ?`,
+            [email, phone],
+            (error, results) => {
+                if (error) {
+                    return callback(error);
+                }
+                return callback(null, results[0]);
+            }
+        );
+    },
     createUser: (data, callBack) => {
         pool.query(
-            `INSERT INTO users (username, email, password, role, operator_status, balance_wallet) 
+            `INSERT INTO users (username, phone, email, password, operator_status, balance_wallet) 
              VALUES (?, ?, ?, ?, ?, ?)`,
             [
                 data.username,
+                data.phone,
                 data.email,
                 data.password,
-                data.role,
                 data.operator_status,
                 data.balance_wallet
             ],

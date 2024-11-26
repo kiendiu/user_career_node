@@ -6,7 +6,8 @@ const {
     //update expects information
     getLanguages,
     updateUserDetails,
-    getUserDetails
+    getUserDetails,
+    getUserByEmailOrPhone
 } = require("./user.service");
 const { sign } = require("jsonwebtoken");
 //const { compareSync, genSaltSync, hashSync } = require("bcrypt");
@@ -14,13 +15,9 @@ const { sign } = require("jsonwebtoken");
 module.exports = {
     createUser: (req, res) => {
         const body = req.body;
-        // const salt = genSaltSync(10);
-        // body.password = hashSync(body.password, salt);
-        body.role = 'user';
-        body.operator_status = 1;
-        body.balance_wallet = 0;
-        
-        createUser(body, (err, results) => {
+
+        // Check if email or phone already exists
+        getUserByEmailOrPhone(body.email, body.phone, (err, user) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json({
@@ -28,9 +25,38 @@ module.exports = {
                     message: "Database connection error"
                 });
             }
-            return res.status(200).json({
-                success: 1,
-                data: results
+            if (user) {
+                if (user.email === body.email) {
+                    return res.status(400).json({
+                        success: 0,
+                        message: "Email đã tồn tại!"
+                    });
+                }
+                if (user.phone === body.phone) {
+                    return res.status(400).json({
+                        success: 0,
+                        message: "Số điện thoại đã tồn tại!"
+                    });
+                }
+            }
+
+            // const salt = genSaltSync(10);
+            // body.password = hashSync(body.password, salt);
+            body.operator_status = 1;
+            body.balance_wallet = 0;
+
+            createUser(body, (err, results) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(500).json({
+                        success: 0,
+                        message: "Database connection error"
+                    });
+                }
+                return res.status(200).json({
+                    success: 1,
+                    data: results
+                });
             });
         });
     },

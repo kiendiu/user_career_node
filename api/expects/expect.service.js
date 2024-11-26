@@ -157,7 +157,7 @@ module.exports = {
         const excludeUserCondition = excludeUserId ? `AND e.user_id != ${excludeUserId}` : '';
     
         const query = `
-            SELECT e.user_id, e.username, e.avatar, s.name_skill AS skill_name, c.name_category,
+            SELECT e.user_id, e.username, e.avatar, e.approval, s.name_skill AS skill_name, c.name_category,
                su.price_online, su.price_offline, su.time_online, su.time_offline,
                COALESCE(AVG(rating.rating), 0) AS average_rating
             FROM users e
@@ -173,6 +173,7 @@ module.exports = {
                 JOIN book_services bs ON bs.book_id = rr.book_id
             ) AS rating ON e.user_id = rating.expert_id
             WHERE su.service_general = 1
+            AND e.approval = 'accepted'
             ${searchCondition}
             ${categoryCondition}
             ${excludeUserCondition}
@@ -191,6 +192,7 @@ module.exports = {
                 JOIN skills s ON su.skill_id = s.skill_id
                 JOIN categories c ON s.category_id = c.category_id
                 WHERE su.service_general = 1
+                AND e.approval = 'accepted'
                 ${searchCondition}
                 ${categoryCondition}
                 ${excludeUserCondition}`;

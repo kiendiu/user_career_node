@@ -12,7 +12,8 @@ const {
     listLanguages,
     listUsers,
     updateUserStatus,
-    updateExpertStatus
+    updateExpertStatus,
+    listUsersWithPagination
 } = require("./admin.controller");
 
 // Category routes
