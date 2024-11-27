@@ -151,7 +151,7 @@ module.exports = {
     },
     getUserDetails: (userId, callBack) => {
         pool.query(
-            `SELECT u.user_id, u.experience_years, u.skill_description,
+            `SELECT u.user_id, u.experience_years, u.skill_description, u.approval,
                 GROUP_CONCAT(JSON_OBJECT('language_id', l.language_id, 'name_language', l.name_language)) AS languages
             FROM users u
             LEFT JOIN user_languages ul ON u.user_id = ul.user_id
@@ -185,5 +185,31 @@ module.exports = {
                 }
             }
         );
-    }
+    },
+    updateApproval: (id, approval, callBack) => {
+        pool.query(
+            `UPDATE users SET approval = ? WHERE user_id = ?`,
+            [approval, id],
+            (error, results) => {
+                if (error) {
+                    return callBack(error);
+                }
+                return callBack(null, results);
+            }
+        );
+    },
+
+    approvalExpert: (id, approval, reason_reject, callBack) => {
+        pool.query(
+            `UPDATE users SET approval = ?, reason_reject = ? WHERE user_id = ?`,
+            [approval, reason_reject, id],
+            (error, results) => {
+                if (error) {
+                    return callBack(error);
+                }
+                return callBack(null, results);
+            }
+        );
+    },
+
 };

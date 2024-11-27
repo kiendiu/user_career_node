@@ -7,7 +7,9 @@ const {
     getLanguages,
     updateUserDetails,
     getUserDetails,
-    getUserByEmailOrPhone
+    getUserByEmailOrPhone,
+    updateApproval,
+    approvalExpert
 } = require("./user.service");
 const { sign } = require("jsonwebtoken");
 //const { compareSync, genSaltSync, hashSync } = require("bcrypt");
@@ -246,5 +248,70 @@ module.exports = {
                 data: results
             });
         });
-    }
+    },
+    updateApproval: (req, res) => {
+        const { status } = req.params;
+        const userId = req.decoded.result.user_id;
+    
+        const validStatuses = ["user", "pending", "rejected", "accepted"];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: 0,
+                message: "Invalid approval status"
+            });
+        }
+    
+        updateApproval(userId, status, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({
+                    success: 0,
+                    message: "Database connection error"
+                });
+            }
+            if (!results.affectedRows) {
+                return res.status(404).json({
+                    success: 0,
+                    message: "User not found"
+                });
+            }
+            return res.status(200).json({
+                success: 1,
+                message: "Approval updated successfully"
+            });
+        });
+    },
+    approvalExpert: (req, res) => {
+        const { userId } = req.body;
+        const { status } = req.body;
+        const { reason } = req.body;
+    
+        const validStatuses = ["user", "pending", "rejected", "accepted"];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: 0,
+                message: "Invalid approval status"
+            });
+        }
+    
+        approvalExpert(userId, status, reason, (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({
+                    success: 0,
+                    message: "Database connection error"
+                });
+            }
+            if (!results.affectedRows) {
+                return res.status(404).json({
+                    success: 0,
+                    message: "User not found"
+                });
+            }
+            return res.status(200).json({
+                success: 1,
+                message: "Approval updated successfully"
+            });
+        });
+    },
 };

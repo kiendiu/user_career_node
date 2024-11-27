@@ -18,7 +18,9 @@ const {
     getDetailSkill,
     getDetailCertificate,
     getExperts,
-    getExpertInfo
+    getExpertInfo,
+    getUserInAdminPage,
+    getUserInfoInAdminPagge
 } = require("./expect.controller");
 
 router.post('/experience', checkToken, addExperience);
@@ -45,5 +47,8 @@ router.get('/certificate/:id', checkToken, getDetailCertificate);
 router.get('/getListExperts', getExperts);
 
 router.get('/getExpertInfo/:id', getExpertInfo);
+
+router.get('/getListUserInAdmin', getUserInAdminPage);
+router.get('/getListUserInAdmin/:id', getUserInfoInAdminPagge);
 
 module.exports = router;

@@ -9,6 +9,8 @@ const {
     getLanguages,
     updateUserDetails,
     getUserDetails,
+    updateApproval,
+    approvalExpert
 } = require("./user.controller");
 
 router.post('/register', createUser);
@@ -19,5 +21,7 @@ router.post('/changePassword', checkToken, changePassword);
 router.get('/languages', getLanguages);
 router.patch('/update-details', checkToken, updateUserDetails);
 router.get('/details', checkToken, getUserDetails);
+router.put("/approval/:status", checkToken, updateApproval);
+router.put("/approval/expert", approvalExpert);
 
 module.exports = router;

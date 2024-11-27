@@ -62,9 +62,9 @@ module.exports = {
                 SELECT t.transaction_id, t.amount, t.type, t.created_at, 
                     CASE 
                         WHEN ps.expert_id = ? THEN 
-                            CONCAT("Bạn đã nhận được tiền cho tư vấn dịch vụ ", s.name_skill, " từ khách hàng ", u.full_name)
+                            CONCAT("Bạn đã nhận được tiền cho tư vấn dịch vụ ", s.name_skill, " từ khách hàng ", u.username)
                         WHEN ps.expert_id != ? THEN 
-                            CONCAT("Bạn đã thanh toán dịch vụ tư vấn ", s.name_skill, " cho chuyên gia ", e.full_name)
+                            CONCAT("Bạn đã thanh toán dịch vụ tư vấn ", s.name_skill, " cho chuyên gia ", e.username)
                         ELSE t.content
                     END AS content,
                     IF(t.type = 'service' AND ps.expert_id != ?, 0, 1) AS is_add

@@ -17,6 +17,7 @@ const {
     getDetailSkillService,
     getDetailCertificateService,
     getExperts,
+    getUserInAdminPage,
     getExpertDetails,
     getExpertLanguagesByExpect,
     getExperiencesByExpect,
@@ -116,6 +117,80 @@ module.exports = {
                 category_id: categoryId
             };
             res.json({ data: result.experts, metadata });
+        });
+    },
+    getUserInAdminPage: (req, res) => {
+        const size = parseInt(req.query.size) || 20;
+        const page = parseInt(req.query.page) || 1;
+        const approval = req.query.approval || '';
+
+        getUserInAdminPage(size, page, approval, (error, result) => {
+            if (error) {
+                return res.status(500).json({ error: error.message });
+            }
+            const metadata = {
+                size,
+                page,
+                total_page: Math.ceil(result.total / size),
+                total: result.total,
+                approval: approval,
+            };
+            res.json({ data: result.experts, metadata });
+        });
+    },
+    getUserInfoInAdminPagge: (req, res) => {
+        const expertId = req.params.id;
+    
+        getExpertDetails(expertId, (error, expertInfo) => {
+            if (error) {
+                return res.status(500).json({
+                    message: "Error fetching expert details",
+                    error: error
+                });
+            }
+    
+            if (!expertInfo) {
+                return res.status(404).json({ message: "Expert not found" });
+            }
+    
+            getExpertLanguagesByExpect(expertId, (error, languages) => {
+                if (error) {
+                    return res.status(500).json({
+                        message: "Error fetching expert languages",
+                        error: error
+                    });
+                }
+    
+                expertInfo.infor = {
+                    language: languages.languages,
+                    experience_year: expertInfo.experience_years,
+                    skill_description: expertInfo.skill_description
+                };
+    
+                getExperiencesByExpect(expertId, (error, experiences) => {
+                    if (error) {
+                        return res.status(500).json({
+                            message: "Error fetching experiences",
+                            error: error
+                        });
+                    }
+    
+                    expertInfo.experience = experiences.length > 0 ? experiences : null;
+    
+                    getSkillsByExpect(expertId, (error, skills) => {
+                        if (error) {
+                            return res.status(500).json({
+                                message: "Error fetching skills",
+                                error: error
+                            });
+                        }
+    
+                        expertInfo.skill = skills.length > 0 ? skills : null;
+    
+                        return res.status(200).json(expertInfo);
+                    });
+                });
+            });
         });
     },
     //đây là danh sách chuyên gia ở trang home

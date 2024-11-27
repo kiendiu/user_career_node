@@ -19,9 +19,9 @@ module.exports = {
                 u.experience_years, 
                 u.skill_description
             FROM users u
-            JOIN skills s ON u.user_id = s.user_id
-            JOIN categories c ON s.category_id = c.category_id
-            JOIN service_user su ON su.skill_id = s.skill_id
+            LEFT JOIN skills s ON u.user_id = s.user_id
+            LEFT JOIN categories c ON s.category_id = c.category_id
+            LEFT JOIN service_user su ON su.skill_id = s.skill_id
             LEFT JOIN service_reviews sr ON sr.expert_id = u.user_id
             WHERE u.user_id = ?
             GROUP BY u.user_id, su.service_id;
@@ -206,6 +206,45 @@ module.exports = {
             });
         });
     },  
+    //danh sach nguoi dung o admin
+    getUserInAdminPage: (size, page, approval, callBack) => {
+        const offset = (page - 1) * size;
+
+        const approvalCondition = approval ? `WHERE e.approval = '${approval}'` : '';
+    
+        const query = `
+            SELECT e.user_id, e.username, e.avatar, e.approval, e.reason_reject, s.name_skill AS skill_name, c.name_category,
+			su.price_online, su.price_offline, su.time_online, su.time_offline
+            FROM users e
+            LEFT JOIN skills s ON e.user_id = s.user_id
+            LEFT JOIN categories c ON s.category_id = c.category_id
+            LEFT JOIN service_user su ON su.skill_id = s.skill_id AND su.service_general = 1
+            ${approvalCondition}
+            GROUP BY e.user_id, s.name_skill
+            LIMIT ? OFFSET ?`;
+    
+        pool.query(query, [size, offset], (error, results) => {
+            if (error) {
+                return callBack(error);
+            }
+    
+            const totalQuery = `
+                SELECT COUNT(*) AS total
+                FROM users e
+                LEFT JOIN skills s ON e.user_id = s.user_id
+                LEFT JOIN categories c ON s.category_id = c.category_id
+                LEFT JOIN service_user su ON su.skill_id = s.skill_id AND su.service_general = 1
+                ${approvalCondition}`;
+    
+            pool.query(totalQuery, (error, totalResults) => {
+                if (error) {
+                    return callBack(error);
+                }
+                const total = totalResults[0].total;
+                return callBack(null, { experts: results, total });
+            });
+        });
+    }, 
     //crud thong tin chuyen gia o more_module       
     addExperience: (data, callBack) => {
         pool.query(
