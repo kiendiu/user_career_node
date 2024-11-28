@@ -11,6 +11,7 @@ const manageRouter = require("./api/manages/manage.router");
 const walletRouter = require("./api/wallet/wallet.router");
 const adminRouter = require("./api/admin/admin.router");
 const otpRouter = require("./api/otp/otp.router");
+const statisticsRouter = require("./api/statistics/router");
 
 app.use(express.json());
 
@@ -23,6 +24,7 @@ app.use('/api/manages', manageRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/otp", otpRouter);
+app.use("/api/statistics", statisticsRouter);
 
 
 const port = process.env.PORT;
