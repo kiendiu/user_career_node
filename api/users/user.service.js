@@ -13,7 +13,7 @@ module.exports = {
             }
         );
     },
-    createUser: (data, callBack) => {
+    registerUser: (data, callBack) => {
         pool.query(
             `INSERT INTO users (username, phone, email, password, operator_status, balance_wallet) 
              VALUES (?, ?, ?, ?, ?, ?)`,
@@ -34,7 +34,6 @@ module.exports = {
         );
     },
     
-    //sử dụng để lấy thông tin để kiểm tratrong hàm login.
     getUserByEmail: (email, callBack) => {
         pool.query(
             `SELECT * FROM users WHERE email = ?`,

@@ -1,0 +1,10 @@
+INSERT INTO experiences (user_id, company, position, category_id, start_time, end_time, currently_working, job_description) VALUES
+(1, 'Công ty A', 'Chuyên gia Kế Toán', 1, '2018-01-01', '2022-12-31', 0, 'Thực hiện kiểm toán và tư vấn tài chính.'),
+(1, 'Công ty B', 'Kế Toán Trưởng', 1, '2023-01-01', NULL, 1, 'Quản lý tài chính và báo cáo doanh nghiệp.'),
+(4, 'Công ty C', 'Nhân viên Marketing', 2, '2015-06-01', '2019-08-31', 0, 'Lên kế hoạch marketing và triển khai chiến dịch.'),
+(4, 'Công ty D', 'Chuyên viên Tiếp Thị', 2, '2020-01-01', NULL, 1, 'Phát triển nội dung tiếp thị số.'),
+(6, 'Công ty E', 'Giáo viên Tiếng Trung', 3, '2017-03-01', '2021-05-31', 0, 'Dạy Tiếng Trung cho học sinh và người lớn.'),
+(9, 'Công ty F', 'Kỹ Sư Xây Dựng', 4, '2016-09-01', '2020-12-31', 0, 'Tham gia thiết kế và thi công công trình.'),
+(12, 'Công ty G', 'Tư vấn Du Học', 5, '2019-02-01', NULL, 1, 'Hỗ trợ học sinh chuẩn bị hồ sơ và tư vấn chọn trường.'),
+(16, 'Công ty H', 'Quản lý Dự Án', 6, '2014-01-01', '2020-06-30', 0, 'Quản lý các dự án phần mềm lớn.'),
+(19, 'Công ty I', 'Tư Vấn Tâm Lý', 7, '2018-05-01', NULL, 1, 'Hỗ trợ khách hàng cải thiện sức khỏe tinh thần.');

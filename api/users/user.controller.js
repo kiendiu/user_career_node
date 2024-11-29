@@ -1,5 +1,5 @@
 const {
-    createUser,
+    registerUser,
     getUserByEmail,
     getUserById,
     updateUser,
@@ -47,7 +47,7 @@ module.exports = {
             body.operator_status = 1;
             body.balance_wallet = 0;
 
-            createUser(body, (err, results) => {
+            registerUser(body, (err, results) => {
                 if (err) {
                     console.log(err);
                     return res.status(500).json({

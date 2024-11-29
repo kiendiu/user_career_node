@@ -85,7 +85,7 @@ module.exports = {
             AND s.skill_id NOT IN (
                     SELECT skill_id 
                     FROM service_user 
-                    WHERE service_general = 0
+                    WHERE service_general = 1
                 )
             GROUP BY su.service_id;
         `;

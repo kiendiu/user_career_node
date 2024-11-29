@@ -46,7 +46,7 @@ module.exports = {
     const { expert_id, book_id, cost, content, method_payment } = req.body;
     const userId = req.decoded.result.user_id;
   
-    const getUserWalletQuery = `SELECT full_name, balance_wallet FROM users WHERE user_id = ?`;
+    const getUserWalletQuery = `SELECT username, balance_wallet FROM users WHERE user_id = ?`;
     pool.query(getUserWalletQuery, [userId], (err, userResults) => {
       if (err || userResults.length === 0) {
         return res.status(500).json({
@@ -56,7 +56,7 @@ module.exports = {
         });
       }
   
-      const customerName = userResults[0].full_name;
+      const customerName = userResults[0].username;
       const customerWallet = userResults[0].balance_wallet;
   
       if (customerWallet < cost) {
@@ -142,7 +142,7 @@ module.exports = {
     const userId = req.decoded.result.user_id;
 
     const getUserWalletQuery = `
-        SELECT full_name, balance_wallet FROM users WHERE user_id = ?
+        SELECT username, balance_wallet FROM users WHERE user_id = ?
     `;
 
     pool.query(getUserWalletQuery, [userId], (err, userResults) => {
@@ -154,7 +154,7 @@ module.exports = {
             });
         }
 
-        const customerName = userResults[0].full_name;
+        const customerName = userResults[0].username;
         const customerWallet = userResults[0].balance_wallet;
 
         if (customerWallet < body.cost) {
@@ -172,7 +172,7 @@ module.exports = {
                 });
             }
 
-            const expertName = expertResults[0].full_name;
+            const expertName = expertResults[0].username;
 
             const content = `Thanh toán cho đặt lịch cho chuyên gia ${expertName}`;
 

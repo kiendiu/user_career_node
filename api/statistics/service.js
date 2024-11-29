@@ -1,24 +1,5 @@
 const pool = require("../../config/database");
 
-
-async function getTotalCompletedBookingStatisticsService() {
-    const query = `
-      SELECT 
-        COUNT(book_id) AS total_completed_bookings,
-        SUM(total_price) AS total_revenue
-      FROM book_services
-      WHERE status = 'completed';
-    `;
-    const result = await pool.query(query);
-
-  if (!Array.isArray(result) || result.length === 0) {
-    return [];
-  }
-
-  const [rows] = result;
-  return rows;
-  }
-
 async function getBookingCountByStatus() {
   const query = `
     SELECT 
@@ -60,7 +41,6 @@ async function getStatisticsByMonth(year) {
 }
 
 module.exports = {
-  getTotalCompletedBookingStatisticsService,
   getBookingCountByStatus,
   getStatisticsByMonth,
 };
