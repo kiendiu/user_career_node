@@ -220,7 +220,7 @@ module.exports = {
             LEFT JOIN categories c ON s.category_id = c.category_id
             LEFT JOIN service_user su ON su.skill_id = s.skill_id AND su.service_general = 1
             ${approvalCondition}
-            GROUP BY e.user_id, s.name_skill
+            GROUP BY e.user_id
             LIMIT ? OFFSET ?`;
     
         pool.query(query, [size, offset], (error, results) => {
