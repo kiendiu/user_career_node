@@ -198,7 +198,7 @@ module.exports = {
         );
     },
 
-    approvalExpert: (id, approval, reason_reject, callBack) => {
+    approvalExpertExam: (id, approval, reason_reject, callBack) => {
         pool.query(
             `UPDATE users SET approval = ?, reason_reject = ? WHERE user_id = ?`,
             [approval, reason_reject, id],

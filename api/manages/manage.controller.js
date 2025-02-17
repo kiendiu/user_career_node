@@ -36,13 +36,12 @@ module.exports = {
         });
     },
     getConsultationScheduleController: (req, res) => {
-        const { type = "all", status, start_date, end_date, page = 1, size = 10 } = req.query;
+        const { type = "all", start_date, end_date, page = 1, size = 10 } = req.query;
         const userId = req.decoded.result.user_id;
 
         const params = {
             userId,
             type,
-            status,
             start_date,
             end_date,
             page: parseInt(page, 10),

@@ -21,7 +21,7 @@ router.post('/changePassword', checkToken, changePassword);
 router.get('/languages', getLanguages);
 router.patch('/update-details', checkToken, updateUserDetails);
 router.get('/details', checkToken, getUserDetails);
-router.put("/approval/:status", checkToken, updateApproval);
-router.put("/approval/expert", approvalExpert);
+router.put("/approval/:status",checkToken, updateApproval);
+router.put("/approval_expert", approvalExpert);
 
 module.exports = router;

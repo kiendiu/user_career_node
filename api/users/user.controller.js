@@ -9,7 +9,7 @@ const {
     getUserDetails,
     getUserByEmailOrPhone,
     updateApproval,
-    approvalExpert
+    approvalExpertExam
 } = require("./user.service");
 const { sign } = require("jsonwebtoken");
 //const { compareSync, genSaltSync, hashSync } = require("bcrypt");
@@ -282,19 +282,17 @@ module.exports = {
         });
     },
     approvalExpert: (req, res) => {
-        const { userId } = req.body;
-        const { status } = req.body;
-        const { reason } = req.body;
+        const body = req.body;
     
         const validStatuses = ["user", "pending", "rejected", "accepted"];
-        if (!validStatuses.includes(status)) {
+        if (!validStatuses.includes(body.status)) {
             return res.status(400).json({
                 success: 0,
                 message: "Invalid approval status"
             });
         }
     
-        approvalExpert(userId, status, reason, (err, results) => {
+        approvalExpertExam(body.user_id, body.status, body.reason, (err, results) => {
             if (err) {
                 console.log(err);
                 return res.status(500).json({
